@@ -6,6 +6,7 @@
 // License text is included with the source distribution.
 //****************************************************************************
 #include <Yglob/PathIterator.hpp>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -15,10 +16,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::clog << "Glob path: " << argv[1] << '\n';
     Yglob::PathIterator it(argv[1]);
     while (it.next())
-        std::clog << it.path() << '\n';
+        std::cout << it.path() << '\n';
 
     return 0;
 }

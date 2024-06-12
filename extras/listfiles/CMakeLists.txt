@@ -6,13 +6,13 @@
 # License text is included with the source distribution.
 # ===========================================================================
 cmake_minimum_required(VERSION 3.28)
-project(glob)
+project(listfiles)
 
-add_executable(glob
-    Glob.cpp
+add_executable(listfiles
+    ListFiles.cpp
     )
 
-target_link_libraries(glob
+target_link_libraries(listfiles
     Ystring2::Ystring
     Yglob::Yglob
     )

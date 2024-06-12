@@ -68,5 +68,5 @@ if (YGLOB_BUILD_TESTS)
 endif ()
 
 if (YGLOB_BUILD_EXTRAS)
-    add_subdirectory(extras/glob)
+    add_subdirectory(extras/listfiles)
 endif ()

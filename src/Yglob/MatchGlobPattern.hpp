@@ -7,18 +7,18 @@
 //****************************************************************************
 #pragma once
 #include <span>
-#include "GlobPattern.hpp"
+#include "GlobElements.hpp"
 
 namespace Yglob
 {
-    bool match_fwd(std::span<Part> parts, std::string_view& str,
+    bool match_fwd(std::span<GlobElement> parts, std::string_view& str,
                    bool case_sensitive,
                    bool is_subpattern);
 
-    bool search_fwd(std::span<Part> parts, std::string_view& str,
+    bool search_fwd(std::span<GlobElement> parts, std::string_view& str,
                     bool case_sensitive,
                     bool is_subpattern);
 
-    bool match_end(std::span<Part> parts, std::string_view& str,
+    bool match_end(std::span<GlobElement> parts, std::string_view& str,
                    bool case_sensitive);
 }

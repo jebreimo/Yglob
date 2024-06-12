@@ -37,7 +37,7 @@ namespace Yglob
         }
     }
 
-    bool starts_with(std::string_view& str, const Part& part,
+    bool starts_with(std::string_view& str, const GlobElement& part,
                      bool case_sensitive)
     {
         struct StartsWithVisitor
@@ -61,7 +61,7 @@ namespace Yglob
                 return false;
             }
 
-            bool operator()(const MultiPattern& mp)
+            bool operator()(const MultiGlob& mp)
             {
                 for (auto& pattern: mp.patterns)
                 {
@@ -74,7 +74,7 @@ namespace Yglob
                 return false;
             }
 
-            bool operator()(const Qmark& qm)
+            bool operator()(const QmarkElement& qm)
             {
                 for (size_t i = 0; i < qm.length; ++i)
                 {
@@ -84,13 +84,13 @@ namespace Yglob
                 return true;
             }
 
-            bool operator()(const Star&)
+            bool operator()(const StarElement&)
             {
                 str.remove_prefix(str.size());
                 return true;
             }
 
-            bool operator()(const Empty&) const
+            bool operator()(const EmptyElement&) const
             {
                 return true;
             }
@@ -102,7 +102,7 @@ namespace Yglob
         return std::visit(StartsWithVisitor{str, case_sensitive}, part);
     }
 
-    bool ends_with(std::string_view& str, const Part& part, bool case_sensitive)
+    bool ends_with(std::string_view& str, const GlobElement& part, bool case_sensitive)
     {
         struct EndsWithVisitor
         {
@@ -125,7 +125,7 @@ namespace Yglob
                 return false;
             }
 
-            bool operator()(const MultiPattern& mp)
+            bool operator()(const MultiGlob& mp)
             {
                 for (auto& pattern: mp.patterns)
                 {
@@ -136,7 +136,7 @@ namespace Yglob
                 return false;
             }
 
-            bool operator()(const Qmark& qm)
+            bool operator()(const QmarkElement& qm)
             {
                 for (size_t i = 0; i < qm.length; ++i)
                 {
@@ -146,12 +146,12 @@ namespace Yglob
                 return true;
             }
 
-            bool operator()(const Star&)
+            bool operator()(const StarElement&)
             {
                 return false;
             }
 
-            bool operator()(const Empty&) const
+            bool operator()(const EmptyElement&) const
             {
                 return true;
             }
@@ -163,13 +163,13 @@ namespace Yglob
         return std::visit(EndsWithVisitor{str, case_sensitive}, part);
     }
 
-    bool match_fwd(std::span<Part> parts, std::string_view& str,
+    bool match_fwd(std::span<GlobElement> parts, std::string_view& str,
                    bool case_sensitive, bool is_subpattern)
     {
         auto str_copy = str;
         for (size_t i = 0; i < parts.size(); ++i)
         {
-            if (std::holds_alternative<Star>(parts[i])
+            if (std::holds_alternative<StarElement>(parts[i])
                 && search_fwd(parts.subspan(i + 1), str,
                               case_sensitive, is_subpattern))
             {
@@ -189,7 +189,7 @@ namespace Yglob
         return false;
     }
 
-    bool search_fwd(std::span<Part> parts, std::string_view& str,
+    bool search_fwd(std::span<GlobElement> parts, std::string_view& str,
                     bool case_sensitive,
                     bool is_subpattern)
     {
@@ -210,7 +210,7 @@ namespace Yglob
         return false;
     }
 
-    bool match_end(std::span<Part> parts, std::string_view& str, bool case_sensitive)
+    bool match_end(std::span<GlobElement> parts, std::string_view& str, bool case_sensitive)
     {
         auto str_copy = str;
         for (size_t i = parts.size(); i-- > 0;)

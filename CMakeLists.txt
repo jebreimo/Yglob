@@ -19,8 +19,11 @@ if (NOT DEFINED YGLOB_MASTER_PROJECT)
     endif ()
 endif ()
 
-# Test option
+# Build tests option
 option(YGLOB_BUILD_TESTS "Build tests" ${YGLOB_MASTER_PROJECT})
+
+# Build extras option
+option(YGLOB_BUILD_EXTRAS "Build extras" ${YGLOB_MASTER_PROJECT})
 
 include(FetchContent)
 FetchContent_Declare(ystring
@@ -34,13 +37,15 @@ add_library(Yglob STATIC
     include/Yglob/PathMatcher.hpp
     include/Yglob/YglobDefinitions.hpp
     src/Yglob/GlobMatcher.cpp
-    src/Yglob/GlobPattern.cpp
-    src/Yglob/GlobPattern.hpp
+    src/Yglob/GlobElements.cpp
+    src/Yglob/GlobElements.hpp
     src/Yglob/ParseGlobPattern.hpp
     src/Yglob/PathMatcher.cpp
     src/Yglob/MatchGlobPattern.cpp
     src/Yglob/MatchGlobPattern.hpp
     src/Yglob/ParseGlobPattern.cpp
+    src/Yglob/PathIterator.cpp
+    include/Yglob/PathIterator.hpp
 )
 
 target_link_libraries(Yglob
@@ -60,4 +65,8 @@ add_library(Yglob::Yglob ALIAS Yglob)
 if (YGLOB_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests/YglobTest)
+endif ()
+
+if (YGLOB_BUILD_EXTRAS)
+    add_subdirectory(extras/glob)
 endif ()

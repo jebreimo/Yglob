@@ -5,31 +5,31 @@
 // This file is distributed under the BSD License.
 // License text is included with the source distribution.
 //****************************************************************************
-#include "GlobPattern.hpp"
+#include "GlobElements.hpp"
 
 #include <ostream>
 
 namespace Yglob
 {
-    std::ostream& operator<<(std::ostream& os, const Qmark& qmark)
+    std::ostream& operator<<(std::ostream& os, const QmarkElement& qmark)
     {
         for (size_t i = 0; i < qmark.length; ++i)
             os << '?';
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const Star&)
+    std::ostream& operator<<(std::ostream& os, const StarElement&)
     {
         os << '*';
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const Empty&)
+    std::ostream& operator<<(std::ostream& os, const EmptyElement&)
     {
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const MultiPattern& multi_pattern)
+    std::ostream& operator<<(std::ostream& os, const MultiGlob& multi_pattern)
     {
         os << '{';
         for (size_t i = 0; i < multi_pattern.patterns.size(); ++i)
@@ -42,13 +42,13 @@ namespace Yglob
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const Part& part)
+    std::ostream& operator<<(std::ostream& os, const GlobElement& part)
     {
         std::visit([&os](const auto& p) {os << p;}, part);
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const GlobPattern& pattern)
+    std::ostream& operator<<(std::ostream& os, const GlobElements& pattern)
     {
         for (const auto& part : pattern.parts)
             os << part;

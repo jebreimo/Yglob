@@ -13,7 +13,7 @@
 
 namespace Yglob
 {
-    struct GlobPattern;
+    struct GlobElements;
 
     struct GlobOptions
     {
@@ -48,7 +48,7 @@ namespace Yglob
         friend YGLOB_API std::ostream&
         operator<<(std::ostream&, const GlobMatcher&);
 
-        std::unique_ptr<GlobPattern> pattern_;
+        std::unique_ptr<GlobElements> pattern_;
     };
 
     YGLOB_API std::ostream&

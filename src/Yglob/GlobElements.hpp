@@ -16,80 +16,80 @@
 
 namespace Yglob
 {
-    struct GlobPattern;
+    struct GlobElements;
 
-    struct Qmark
+    struct QmarkElement
     {
         size_t length = 0;
     };
 
-    std::ostream& operator<<(std::ostream& os, const Qmark& qmark);
+    std::ostream& operator<<(std::ostream& os, const QmarkElement& qmark);
 
-    struct Star
+    struct StarElement
     {};
 
-    std::ostream& operator<<(std::ostream& os, const Star& star);
+    std::ostream& operator<<(std::ostream& os, const StarElement& star);
 
-    struct Empty
+    struct EmptyElement
     {};
 
-    std::ostream& operator<<(std::ostream& os, const Empty& empty);
+    std::ostream& operator<<(std::ostream& os, const EmptyElement& empty);
 
-    struct MultiPattern
+    struct MultiGlob
     {
-        MultiPattern() = default;
+        MultiGlob() = default;
 
-        MultiPattern(const MultiPattern& rhs)
+        MultiGlob(const MultiGlob& rhs)
             : patterns(rhs.patterns.size())
         {
             for (size_t i = 0; i < rhs.patterns.size(); ++i)
-                patterns[i] = std::make_unique<GlobPattern>(*rhs.patterns[i]);
+                patterns[i] = std::make_unique<GlobElements>(*rhs.patterns[i]);
         }
 
-        MultiPattern(MultiPattern&& rhs) noexcept
+        MultiGlob(MultiGlob&& rhs) noexcept
             : patterns(std::move(rhs.patterns))
         {}
 
-        ~MultiPattern() = default;
+        ~MultiGlob() = default;
 
-        MultiPattern& operator=(const MultiPattern& rhs)
+        MultiGlob& operator=(const MultiGlob& rhs)
         {
             if (this != &rhs)
             {
                 patterns.resize(rhs.patterns.size());
                 for (size_t i = 0; i < rhs.patterns.size(); ++i)
-                    patterns[i] = std::make_unique<GlobPattern>(*rhs.patterns[i]);
+                    patterns[i] = std::make_unique<GlobElements>(*rhs.patterns[i]);
             }
             return *this;
         }
 
-        MultiPattern& operator=(MultiPattern&& rhs) noexcept
+        MultiGlob& operator=(MultiGlob&& rhs) noexcept
         {
             patterns = std::move(rhs.patterns);
             return *this;
         }
 
-        std::vector<std::unique_ptr<GlobPattern>> patterns;
+        std::vector<std::unique_ptr<GlobElements>> patterns;
     };
 
-    std::ostream& operator<<(std::ostream& os, const MultiPattern& multi_pattern);
+    std::ostream& operator<<(std::ostream& os, const MultiGlob& multi_pattern);
 
-    using Part = std::variant<
-        Empty,
-        Star,
-        Qmark,
+    using GlobElement = std::variant<
+        EmptyElement,
+        StarElement,
+        QmarkElement,
         ystring::CodepointSet,
         std::string,
-        MultiPattern
+        MultiGlob
         >;
 
-    std::ostream& operator<<(std::ostream& os, const Part& part);
+    std::ostream& operator<<(std::ostream& os, const GlobElement& part);
 
-    struct GlobPattern
+    struct GlobElements
     {
-        std::vector<Part> parts;
+        std::vector<GlobElement> parts;
         size_t tail_length = 0;
     };
 
-    std::ostream& operator<<(std::ostream& os, const GlobPattern& pattern);
+    std::ostream& operator<<(std::ostream& os, const GlobElements& pattern);
 }

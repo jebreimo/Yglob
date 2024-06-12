@@ -131,9 +131,9 @@ namespace Yglob
         return result;
     }
 
-    Star extract_stars(std::string_view& pattern)
+    StarElement extract_stars(std::string_view& pattern)
     {
-        Star result;
+        StarElement result;
         while (!pattern.empty() && pattern[0] == '*')
         {
             pattern.remove_prefix(1);
@@ -141,9 +141,9 @@ namespace Yglob
         return result;
     }
 
-    Qmark extract_qmarks(std::string_view& pattern)
+    QmarkElement extract_qmarks(std::string_view& pattern)
     {
-        Qmark result;
+        QmarkElement result;
         while (!pattern.empty() && pattern[0] == '?')
         {
             result.length++;
@@ -153,12 +153,13 @@ namespace Yglob
     }
 
     // NOLINTBEGIN(misc-no-recursion)
-    MultiPattern extract_multi_pattern(std::string_view& pattern,
-                                       GlobParserOptions options)
+
+    MultiGlob extract_multi_glob(std::string_view& pattern,
+                                 GlobParserOptions options)
     {
         options.is_subpattern = true;
 
-        MultiPattern result;
+        MultiGlob result;
         while (!pattern.empty())
         {
             switch (next_token_type(pattern, options))
@@ -171,7 +172,7 @@ namespace Yglob
             case TokenType::END_BRACE:
                 if (result.patterns.empty())
                     YSTRING_THROW(
-                        "Empty subpattern in glob pattern. Did you mean to use '\\{\\}'?");
+                        "EmptyElement subpattern in glob pattern. Did you mean to use '\\{\\}'?");
                 pattern.remove_prefix(1);
                 return result;
             default:
@@ -182,12 +183,12 @@ namespace Yglob
     }
 
     [[nodiscard]]
-    bool has_star(const std::vector<Part>& parts);
+    bool has_star(const std::vector<GlobElement>& parts);
 
     [[nodiscard]]
-    bool has_star(const Part& part)
+    bool has_star(const GlobElement& part)
     {
-        if (auto multi_pattern = std::get_if<MultiPattern>(&part))
+        if (auto multi_pattern = std::get_if<MultiGlob>(&part))
         {
             for (const auto& pattern: multi_pattern->patterns)
             {
@@ -195,18 +196,18 @@ namespace Yglob
                     return true;
             }
         }
-        return std::holds_alternative<Star>(part);
+        return std::holds_alternative<StarElement>(part);
     }
 
     [[nodiscard]]
-    bool has_star(const std::vector<Part>& parts)
+    bool has_star(const std::vector<GlobElement>& parts)
     {
         return std::any_of(parts.begin(), parts.end(),
                            [](auto& p) {return has_star(p);}
         );
     }
 
-    void optimize(GlobPattern& pattern)
+    void optimize(GlobElements& pattern)
     {
         pattern.tail_length = 0;
         for (auto it = pattern.parts.rbegin(); it != pattern.parts.rend(); ++it)
@@ -217,11 +218,11 @@ namespace Yglob
         }
     }
 
-    std::unique_ptr<GlobPattern>
+    std::unique_ptr<GlobElements>
     parse_glob_pattern(std::string_view& pattern,
                        const GlobParserOptions& options)
     {
-        auto result = std::make_unique<GlobPattern>();
+        auto result = std::make_unique<GlobElements>();
 
         bool done = false;
         while (!done)
@@ -241,14 +242,14 @@ namespace Yglob
                 result->parts.emplace_back(extract_char_set(pattern));
                 break;
             case TokenType::OPEN_BRACE:
-                result->parts.emplace_back(extract_multi_pattern(pattern,
-                                                                 options));
+                result->parts.emplace_back(extract_multi_glob(pattern,
+                                                              options));
                 break;
             case TokenType::COMMA:
             case TokenType::END_BRACE:
             default:
                 if (result->parts.empty())
-                    result->parts.emplace_back(Empty());
+                    result->parts.emplace_back(EmptyElement());
                 done = true;
                 break;
             }
@@ -259,4 +260,7 @@ namespace Yglob
 
         return result;
     }
+
+    // NOLINTEND(misc-no-recursion)
+
 }

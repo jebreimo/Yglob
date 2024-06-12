@@ -25,7 +25,7 @@ namespace Yglob
     {}
 
     GlobMatcher::GlobMatcher(const GlobMatcher& rhs)
-        : pattern_(rhs.pattern_ ? std::make_unique<GlobPattern>(*rhs.pattern_)
+        : pattern_(rhs.pattern_ ? std::make_unique<GlobElements>(*rhs.pattern_)
                                 : nullptr)
     {}
 
@@ -40,7 +40,7 @@ namespace Yglob
         if (this != &rhs)
         {
             pattern_ = rhs.pattern_
-                       ? std::make_unique<GlobPattern>(*rhs.pattern_)
+                       ? std::make_unique<GlobElements>(*rhs.pattern_)
                        : nullptr;
             case_sensitive = rhs.case_sensitive;
         }

@@ -8,7 +8,8 @@
 #include "Yglob/GlobMatcher.hpp"
 
 #include <Ystring/Unescape.hpp>
-#include "GlobPattern.hpp"
+#include "MatchGlobPattern.hpp"
+#include "ParseGlobPattern.hpp"
 
 namespace Yglob
 {

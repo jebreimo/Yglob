@@ -5,7 +5,7 @@
 // This file is distributed under the BSD License.
 // License text is included with the source distribution.
 //****************************************************************************
-#include "Yglob/GlobPattern.hpp"
+#include "Yglob/ParseGlobPattern.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Test character set")

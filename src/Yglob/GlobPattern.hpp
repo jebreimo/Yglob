@@ -8,7 +8,6 @@
 #pragma once
 #include <iosfwd>
 #include <memory>
-#include <span>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -93,53 +92,4 @@ namespace Yglob
     };
 
     std::ostream& operator<<(std::ostream& os, const GlobPattern& pattern);
-
-    enum class TokenType
-    {
-        NONE,
-        CHAR,
-        QUESTION_MARK,
-        STAR,
-        OPEN_BRACKET,
-        OPEN_BRACE,
-        COMMA,
-        END_BRACE
-    };
-
-    struct GlobParserOptions
-    {
-        bool support_braces = true;
-        bool support_sets = true;
-        bool is_subpattern = false;
-    };
-
-    std::unique_ptr<GlobPattern>
-    parse_glob_pattern(std::string_view& pattern,
-                       const GlobParserOptions& options);
-
-    bool match_fwd(std::span<Part> parts, std::string_view& str,
-                   bool case_sensitive,
-                   bool is_subpattern);
-
-    bool search_fwd(std::span<Part> parts, std::string_view& str,
-                    bool case_sensitive,
-                    bool is_subpattern);
-
-    bool match_end(std::span<Part> parts, std::string_view& str,
-                   bool case_sensitive);
-
-    TokenType next_token_type(std::string_view pattern,
-                              const GlobParserOptions& options);
-
-    ystring::CodepointSet extract_char_set(std::string_view& pattern);
-
-    std::string extract_string(std::string_view& pattern,
-                               const GlobParserOptions& options);
-
-    Star extract_stars(std::string_view& pattern);
-
-    Qmark extract_qmarks(std::string_view& pattern);
-
-    MultiPattern extract_multi_pattern(std::string_view& pattern,
-                                       GlobParserOptions options);
 }

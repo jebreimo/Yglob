@@ -15,8 +15,6 @@ FetchContent_Declare(catch
 FetchContent_MakeAvailable(catch)
 
 add_executable(YglobTest
-    Utf8Chars.hpp
-    U8Adapter.hpp
     test_GlobMatcher.cpp
     test_GlobPattern.cpp
     test_PathMatcher.cpp

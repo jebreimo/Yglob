@@ -30,12 +30,17 @@ FetchContent_Declare(ystring
 FetchContent_MakeAvailable(ystring)
 
 add_library(Yglob STATIC
-    include/Yglob/YglobDefinitions.hpp
     include/Yglob/GlobMatcher.hpp
+    include/Yglob/PathMatcher.hpp
+    include/Yglob/YglobDefinitions.hpp
     src/Yglob/GlobMatcher.cpp
     src/Yglob/GlobPattern.cpp
+    src/Yglob/GlobPattern.hpp
+    src/Yglob/ParseGlobPattern.hpp
     src/Yglob/PathMatcher.cpp
-    include/Yglob/PathMatcher.hpp
+    src/Yglob/MatchGlobPattern.cpp
+    src/Yglob/MatchGlobPattern.hpp
+    src/Yglob/ParseGlobPattern.cpp
 )
 
 target_link_libraries(Yglob
@@ -49,6 +54,8 @@ target_include_directories(Yglob BEFORE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
+
+add_library(Yglob::Yglob ALIAS Yglob)
 
 if (YGLOB_BUILD_TESTS)
     enable_testing()

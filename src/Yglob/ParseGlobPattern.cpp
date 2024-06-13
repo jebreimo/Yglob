@@ -10,6 +10,7 @@
 #include <Ystring/Algorithms.hpp>
 #include <Ystring/DecodeUtf8.hpp>
 #include <Ystring/Unescape.hpp>
+#include "Yglob/YglobException.hpp"
 
 namespace Yglob
 {
@@ -72,7 +73,7 @@ namespace Yglob
             if (ch == U']' && !did_unescape)
             {
                 if (state == State::AWAITING_LAST)
-                    YSTRING_THROW("Incomplete character range in glob pattern.");
+                    YGLOB_THROW("Incomplete character range in glob pattern.");
                 return result;
             }
             else if (ch == U'-' && !did_unescape)
@@ -82,7 +83,7 @@ namespace Yglob
                 else if (state == State::AWAITING_FIRST && result.ranges.empty())
                     result.ranges.emplace_back('-', '-');
                 else
-                    YSTRING_THROW("Invalid character range in glob pattern.");
+                    YGLOB_THROW("Invalid character range in glob pattern.");
             }
             else if (state != State::AWAITING_LAST)
             {
@@ -96,10 +97,10 @@ namespace Yglob
             }
             else
             {
-                YSTRING_THROW("Invalid character range in glob pattern.");
+                YGLOB_THROW("Invalid character range in glob pattern.");
             }
         }
-        YSTRING_THROW("Unmatched '[' in glob pattern.");
+        YGLOB_THROW("Unmatched '[' in glob pattern.");
     }
 
     std::string extract_string(std::string_view& pattern,
@@ -171,15 +172,15 @@ namespace Yglob
                 break;
             case TokenType::END_BRACE:
                 if (result.patterns.empty())
-                    YSTRING_THROW(
+                    YGLOB_THROW(
                         "EmptyElement subpattern in glob pattern. Did you mean to use '\\{\\}'?");
                 pattern.remove_prefix(1);
                 return result;
             default:
-                YSTRING_THROW("Unmatched '{' in glob pattern.");
+                YGLOB_THROW("Unmatched '{' in glob pattern.");
             }
         }
-        YSTRING_THROW("Unmatched '{' in glob pattern.");
+        YGLOB_THROW("Unmatched '{' in glob pattern.");
     }
 
     [[nodiscard]]

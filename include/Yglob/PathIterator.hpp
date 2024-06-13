@@ -7,12 +7,7 @@
 //****************************************************************************
 #pragma once
 #include <filesystem>
-#include <iostream>
-#include <Ystring/Algorithms.hpp>
-#include <Ystring/GlobMatcher.hpp>
-#include <Ystring/PathMatcher.hpp>
-#include <utility>
-#include "YglobDefinitions.hpp"
+#include "GlobMatcher.hpp"
 
 namespace Yglob
 {
@@ -21,7 +16,8 @@ namespace Yglob
     public:
         PathIterator();
 
-        explicit PathIterator(const std::filesystem::path& glob_path);
+        explicit PathIterator(const std::filesystem::path& glob_path,
+                              const GlobOptions& options = {});
 
         ~PathIterator();
 

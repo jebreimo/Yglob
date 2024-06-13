@@ -6,7 +6,7 @@
 # License text is included with the source distribution.
 # ===========================================================================
 cmake_minimum_required(VERSION 3.28)
-project(Yglob)
+project(Yglob VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -25,10 +25,17 @@ option(YGLOB_BUILD_TESTS "Build tests" ${YGLOB_MASTER_PROJECT})
 # Build extras option
 option(YGLOB_BUILD_EXTRAS "Build extras" ${YGLOB_MASTER_PROJECT})
 
+# Install option
+option(YGLOB_INSTALL "Generate the install target" ${YGLOB_MASTER_PROJECT})
+
+if (YGLOB_INSTALL)
+    set(YSTRING_INSTALL ON)
+endif ()
+
 include(FetchContent)
 FetchContent_Declare(ystring
     GIT_REPOSITORY "https://github.com/jebreimo/Ystring2.git"
-    GIT_TAG "master"
+    GIT_TAG "v2.2.0"
 )
 FetchContent_MakeAvailable(ystring)
 
@@ -46,12 +53,16 @@ add_library(Yglob STATIC
     src/Yglob/ParseGlobPattern.cpp
     src/Yglob/PathIterator.cpp
     include/Yglob/PathIterator.hpp
+    include/Yglob/Yglob.hpp
+    include/Yglob/YglobException.hpp
 )
 
 target_link_libraries(Yglob
     PRIVATE
         Ystring2::Ystring
 )
+
+include(GNUInstallDirs)
 
 target_include_directories(Yglob BEFORE
     PUBLIC
@@ -69,4 +80,42 @@ endif ()
 
 if (YGLOB_BUILD_EXTRAS)
     add_subdirectory(extras/listfiles)
+endif ()
+
+export(TARGETS Yglob
+    NAMESPACE Yglob::
+    FILE YglobConfig.cmake)
+
+if (YGLOB_INSTALL)
+    install(TARGETS Yglob
+        EXPORT YglobConfig
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    install(EXPORT YglobConfig
+        FILE YglobConfig.cmake
+        NAMESPACE Yglob::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Yglob
+    )
+
+    file(GLOB_RECURSE PUBLIC_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp)
+    install(
+        FILES
+            ${PUBLIC_INCLUDES}
+            ${CMAKE_CURRENT_BINARY_DIR}/YglobVersion.hpp
+        DESTINATION
+            ${CMAKE_INSTALL_INCLUDEDIR}/Yglob
+    )
+
+    include(CMakePackageConfigHelpers)
+
+    write_basic_package_version_file(YglobConfigVersion.cmake
+        COMPATIBILITY SameMajorVersion
+    )
+
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/YglobConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Yglob
+    )
 endif ()

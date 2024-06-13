@@ -6,6 +6,9 @@
 // License text is included with the source distribution.
 //****************************************************************************
 #include "Yglob/PathIterator.hpp"
+#include <Ystring/Algorithms.hpp>
+#include <Yglob/GlobMatcher.hpp>
+#include <Yglob/PathMatcher.hpp>
 
 namespace Yglob
 {
@@ -70,7 +73,7 @@ namespace Yglob
     class GlobIterator : public SubPathIterator
     {
     public:
-        explicit GlobIterator(ystring::GlobMatcher matcher)
+        explicit GlobIterator(GlobMatcher matcher)
             : matcher_(std::move(matcher))
         {
         }
@@ -109,13 +112,13 @@ namespace Yglob
         std::filesystem::directory_iterator end_;
         std::filesystem::path base_path_;
         std::filesystem::path current_path_;
-        ystring::GlobMatcher matcher_;
+        GlobMatcher matcher_;
     };
 
     class DoubleStarIterator : public SubPathIterator
     {
     public:
-        explicit DoubleStarIterator(ystring::PathMatcher matcher)
+        explicit DoubleStarIterator(PathMatcher matcher)
             : matcher_(std::move(matcher))
         {
         }
@@ -153,7 +156,7 @@ namespace Yglob
         std::filesystem::recursive_directory_iterator end_;
         std::filesystem::path base_path_;
         std::filesystem::path current_path_;
-        ystring::PathMatcher matcher_;
+        PathMatcher matcher_;
     };
 
     std::filesystem::path
@@ -167,8 +170,21 @@ namespace Yglob
         return path;
     }
 
+    void handle_plain_path(std::vector<std::unique_ptr<SubPathIterator>>& iterators,
+                           std::filesystem::path& path)
+    {
+        if (!path.empty())
+        {
+            iterators.emplace_back(
+                std::make_unique<SinglePathIterator>(std::move(path),
+                                                     iterators.empty()));
+            path = std::filesystem::path();
+        }
+    }
+
     std::vector<std::unique_ptr<SubPathIterator>>
-    parse_glob_path(const std::filesystem::path& path)
+    parse_glob_path(const std::filesystem::path& path,
+                    const GlobOptions& options)
     {
         std::vector<std::unique_ptr<SubPathIterator>> result;
         std::filesystem::path plain_path;
@@ -178,30 +194,17 @@ namespace Yglob
             auto name = it->u8string();
             if (name == u8"**")
             {
-                if (!plain_path.empty())
-                {
-                    result.emplace_back(
-                        std::make_unique<SinglePathIterator>(std::move(plain_path),
-                                                             result.empty()));
-                    plain_path = std::filesystem::path();
-                }
-
+                handle_plain_path(result, plain_path);
                 result.emplace_back(std::make_unique<DoubleStarIterator>(
-                    ystring::PathMatcher(make_path(++it, end, u8"**"))));
+                    PathMatcher(make_path(++it, end, u8"**"))));
                 break;
             }
 
-            if (ystring::is_glob_pattern(ystring::to_string_view(name)))
+            if (is_glob_pattern(ystring::to_string_view(name)))
             {
-                if (!plain_path.empty())
-                {
-                    result.emplace_back(std::make_unique<SinglePathIterator>(std::move(plain_path),
-                                                                             result.empty()));
-                    plain_path = std::filesystem::path();
-                }
-
+                handle_plain_path(result, plain_path);
                 result.emplace_back(std::make_unique<GlobIterator>(
-                    ystring::GlobMatcher(ystring::to_string_view(name))));
+                    GlobMatcher(ystring::to_string_view(name), options)));
             }
             else
             {
@@ -209,22 +212,17 @@ namespace Yglob
             }
         }
 
-        if (!plain_path.empty())
-        {
-            result.emplace_back(std::make_unique<SinglePathIterator>(std::move(plain_path),
-                                                                     result.empty()));
-        }
-
+        handle_plain_path(result, plain_path);
         return result;
     }
 
     class PathIterator::PathIteratorImpl
     {
     public:
-        explicit PathIteratorImpl(const std::filesystem::path& glob_path)
-            : iterators_(parse_glob_path(glob_path))
-        {
-        }
+        explicit PathIteratorImpl(const std::filesystem::path& glob_path,
+                                  const GlobOptions& options)
+            : iterators_(parse_glob_path(glob_path, options))
+        {}
 
         bool next()
         {
@@ -282,8 +280,9 @@ namespace Yglob
 
     PathIterator::PathIterator() = default;
 
-    PathIterator::PathIterator(const std::filesystem::path& glob_path)
-        : impl_(std::make_unique<PathIteratorImpl>(glob_path))
+    PathIterator::PathIterator(const std::filesystem::path& glob_path,
+                               const GlobOptions& options)
+        : impl_(std::make_unique<PathIteratorImpl>(glob_path, options))
     {}
 
     PathIterator::~PathIterator() = default;

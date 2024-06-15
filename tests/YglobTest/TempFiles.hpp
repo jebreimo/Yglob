@@ -8,6 +8,7 @@
 #pragma once
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <ranges>
 #include <vector>
 
@@ -16,15 +17,36 @@ class TempFiles
 public:
     TempFiles(std::initializer_list<std::filesystem::path> sub_paths)
     {
-        tmp_path = std::filesystem::temp_directory_path();
+        tmp_path = canonical(std::filesystem::temp_directory_path());
         for (auto& sub_path: sub_paths)
             make_file(tmp_path / sub_path);
     }
 
     ~TempFiles()
     {
-        for (auto& path: paths)
-            std::filesystem::remove(path);
+        try
+        {
+            for (auto& path: files_)
+                std::filesystem::remove(path);
+            for (auto& path: std::ranges::reverse_view(dirs_))
+                std::filesystem::remove(path);
+        }
+        catch (std::filesystem::filesystem_error& ex)
+        {
+            std::cerr << "Failed to remove temporary files: " << ex.what() << std::endl;
+        }
+    }
+
+    [[nodiscard]]
+    std::filesystem::path base_directory() const
+    {
+        return tmp_path;
+    }
+
+    [[nodiscard]]
+    std::vector<std::filesystem::path> files() const
+    {
+        return files_;
     }
 
     [[nodiscard]]
@@ -45,7 +67,7 @@ private:
         for (auto& it: std::ranges::reverse_view(dirs_to_create))
         {
             std::filesystem::create_directory(it);
-            paths.push_back(it);
+            dirs_.push_back(it);
         }
     }
 
@@ -56,9 +78,10 @@ private:
 
         create_dirs(path.parent_path());
         std::ofstream(path) << "Hello, world!";
-        paths.push_back(path);
+        files_.push_back(path);
     }
 
     std::filesystem::path tmp_path;
-    std::vector<std::filesystem::path> paths;
+    std::vector<std::filesystem::path> dirs_;
+    std::vector<std::filesystem::path> files_;
 };

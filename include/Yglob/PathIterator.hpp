@@ -7,17 +7,31 @@
 //****************************************************************************
 #pragma once
 #include <filesystem>
-#include "GlobMatcher.hpp"
+#include "GlobFlags.hpp"
+#include "YglobDefinitions.hpp"
 
 namespace Yglob
 {
+    enum class PathIteratorFlags : unsigned
+    {
+        NONE = 0,
+        CASE_SENSITIVE = 1,
+        USE_BRACES = 2,
+        USE_SETS = 4,
+        FILES = 8,
+        DIRECTORIES = 16,
+        DEFAULT = CASE_SENSITIVE | USE_BRACES | USE_SETS | FILES
+    };
+
+    YGLOB_ENABLE_BITMASK_OPERATORS(PathIteratorFlags);
+
     class YGLOB_API PathIterator
     {
     public:
         PathIterator();
 
         explicit PathIterator(const std::filesystem::path& glob_path,
-                              const GlobOptions& options = {});
+                              PathIteratorFlags flags = PathIteratorFlags::DEFAULT);
 
         ~PathIterator();
 

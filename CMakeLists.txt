@@ -55,6 +55,8 @@ add_library(Yglob STATIC
     include/Yglob/PathIterator.hpp
     include/Yglob/Yglob.hpp
     include/Yglob/YglobException.hpp
+    include/Yglob/GlobFlags.hpp
+    include/Yglob/BitmaskOperators.hpp
 )
 
 target_link_libraries(Yglob

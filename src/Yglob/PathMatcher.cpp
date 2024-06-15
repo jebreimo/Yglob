@@ -11,7 +11,7 @@
 #include <vector>
 #include <span>
 #include <Ystring/Algorithms.hpp>
-#include <Yglob/GlobMatcher.hpp>
+#include "Yglob/GlobMatcher.hpp"
 
 namespace Yglob
 {
@@ -29,14 +29,20 @@ namespace Yglob
                    ? str == cmp
                    : ystring::case_insensitive::equal(str, cmp);
         }
+
+        inline std::u8string_view to_u8string_view(std::string_view str)
+        {
+            static_assert(sizeof(char) == sizeof(char8_t));
+            return {reinterpret_cast<const char8_t*>(str.data()), str.size()};
+        }
     }
 
     class PathMatcher::PathMatcherImpl
     {
     public:
         explicit PathMatcherImpl(std::filesystem::path pattern,
-                                 const GlobOptions& options)
-            : case_sensitive_(options.case_sensitive)
+                                 GlobFlags flags)
+            : case_sensitive_(bool(flags & GlobFlags::CASE_SENSITIVE))
         {
             pattern = pattern.lexically_normal();
             while (true)
@@ -46,7 +52,7 @@ namespace Yglob
                 if (filename_view == "**")
                     elements_.emplace_back(AnyPath{});
                 else if (is_glob_pattern(filename_view))
-                    elements_.emplace_back(GlobMatcher(filename_view, options));
+                    elements_.emplace_back(GlobMatcher(filename_view, flags));
                 else if (!filename_view.empty())
                     elements_.emplace_back(std::string(filename_view));
                 auto parent_path = pattern.parent_path();
@@ -130,12 +136,13 @@ namespace Yglob
 
     PathMatcher::PathMatcher() = default;
 
-    PathMatcher::PathMatcher(std::string_view pattern, const GlobOptions& options)
-        : impl_(std::make_unique<PathMatcherImpl>(pattern, options))
+    PathMatcher::PathMatcher(std::string_view pattern, GlobFlags flags)
+        : impl_(std::make_unique<PathMatcherImpl>(pattern, flags))
     {}
 
-    PathMatcher::PathMatcher(const std::filesystem::path& pattern)
-        : impl_(std::make_unique<PathMatcherImpl>(pattern, GlobOptions{}))
+    PathMatcher::PathMatcher(const std::filesystem::path& pattern,
+                             GlobFlags flags)
+        : impl_(std::make_unique<PathMatcherImpl>(pattern, flags))
     {}
 
     PathMatcher::PathMatcher(const PathMatcher& rhs)
@@ -165,7 +172,7 @@ namespace Yglob
 
     bool PathMatcher::match(std::string_view str) const
     {
-        return false;
+        return match(std::filesystem::path(to_u8string_view(str)));
     }
 
     bool PathMatcher::match(const std::filesystem::path& str) const

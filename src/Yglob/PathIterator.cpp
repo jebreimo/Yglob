@@ -7,221 +7,238 @@
 //****************************************************************************
 #include "Yglob/PathIterator.hpp"
 #include <Ystring/Algorithms.hpp>
-#include <Yglob/GlobMatcher.hpp>
-#include <Yglob/PathMatcher.hpp>
+#include "Yglob/GlobMatcher.hpp"
+#include "Yglob/PathMatcher.hpp"
 
 namespace Yglob
 {
-    class SubPathIterator
+    namespace
     {
-    public:
-        virtual ~SubPathIterator() = default;
-
-        virtual void set_base_path(std::filesystem::path base_path) = 0;
-
-        virtual bool next() = 0;
-
-        bool next_directory()
+        class SubPathIterator
         {
-            while (next())
+        public:
+            virtual ~SubPathIterator() = default;
+
+            virtual void set_base_path(std::filesystem::path base_path) = 0;
+
+            virtual bool next() = 0;
+
+            bool next_directory()
             {
-                if (std::filesystem::is_directory(path()))
-                    return true;
-            }
-            return false;
-        }
-
-        [[nodiscard]]
-        virtual std::filesystem::path path() const = 0;
-    };
-
-    class SinglePathIterator : public SubPathIterator
-    {
-    public:
-        SinglePathIterator(std::filesystem::path path, bool has_next)
-            : path_(std::move(path)),
-              has_next_(has_next)
-        {}
-
-        void set_base_path(std::filesystem::path base_path) override
-        {
-            base_path_ = std::move(base_path);
-            has_next_ = true;
-        }
-
-        bool next() override
-        {
-            if (!has_next_)
+                while (next())
+                {
+                    if (std::filesystem::is_directory(path()))
+                        return true;
+                }
                 return false;
+            }
 
-            has_next_ = false;
-            return exists(base_path_ / path_);
-        }
+            [[nodiscard]]
+            virtual std::filesystem::path path() const = 0;
+        };
 
-        [[nodiscard]]
-        std::filesystem::path path() const override
+        class SinglePathIterator : public SubPathIterator
         {
-            return base_path_ / path_;
-        }
-
-    public:
-        std::filesystem::path base_path_;
-        std::filesystem::path path_;
-        bool has_next_ = true;
-    };
-
-    class GlobIterator : public SubPathIterator
-    {
-    public:
-        explicit GlobIterator(GlobMatcher matcher)
-            : matcher_(std::move(matcher))
-        {
-        }
-
-        bool next() override
-        {
-            while (it_ != end_)
+        public:
+            SinglePathIterator(std::filesystem::path path, bool has_next)
+                : path_(std::move(path)),
+                  has_next_(has_next)
             {
-                auto filename = it_->path().filename().u8string();
-                if (matcher_.match(ystring::to_string_view(filename)))
+            }
+
+            void set_base_path(std::filesystem::path base_path) override
+            {
+                base_path_ = std::move(base_path);
+                has_next_ = true;
+            }
+
+            bool next() override
+            {
+                if (!has_next_)
+                    return false;
+
+                has_next_ = false;
+                return exists(base_path_ / path_);
+            }
+
+            [[nodiscard]]
+            std::filesystem::path path() const override
+            {
+                return base_path_ / path_;
+            }
+
+        public:
+            std::filesystem::path base_path_;
+            std::filesystem::path path_;
+            bool has_next_ = true;
+        };
+
+        class GlobIterator : public SubPathIterator
+        {
+        public:
+            explicit GlobIterator(GlobMatcher matcher)
+                : matcher_(std::move(matcher))
+            {
+            }
+
+            bool next() override
+            {
+                while (it_ != end_)
                 {
-                    current_path_ = it_->path();
+                    auto filename = it_->path().filename().u8string();
+                    if (matcher_.match(ystring::to_string_view(filename)))
+                    {
+                        current_path_ = it_->path();
+                        ++it_;
+                        return true;
+                    }
                     ++it_;
-                    return true;
                 }
-                ++it_;
+                return false;
             }
-            return false;
-        }
 
-        void set_base_path(std::filesystem::path base_path) override
-        {
-            base_path_ = std::move(base_path);
-            it_ = std::filesystem::directory_iterator(base_path_);
-            end_ = end(it_);
-        }
-
-        [[nodiscard]]
-        std::filesystem::path path() const override
-        {
-            return current_path_;
-        }
-
-    private:
-        std::filesystem::directory_iterator it_;
-        std::filesystem::directory_iterator end_;
-        std::filesystem::path base_path_;
-        std::filesystem::path current_path_;
-        GlobMatcher matcher_;
-    };
-
-    class DoubleStarIterator : public SubPathIterator
-    {
-    public:
-        explicit DoubleStarIterator(PathMatcher matcher)
-            : matcher_(std::move(matcher))
-        {
-        }
-
-        void set_base_path(std::filesystem::path base_path) override
-        {
-            base_path_ = std::move(base_path);
-            it_ = std::filesystem::recursive_directory_iterator(base_path_);
-            end_ = end(it_);
-        }
-
-        bool next() override
-        {
-            while (it_ != end_)
+            void set_base_path(std::filesystem::path base_path) override
             {
-                if (matcher_.match(it_->path()))
+                base_path_ = std::move(base_path);
+                it_ = std::filesystem::directory_iterator(base_path_);
+                end_ = end(it_);
+            }
+
+            [[nodiscard]]
+            std::filesystem::path path() const override
+            {
+                return current_path_;
+            }
+
+        private:
+            std::filesystem::directory_iterator it_;
+            std::filesystem::directory_iterator end_;
+            std::filesystem::path base_path_;
+            std::filesystem::path current_path_;
+            GlobMatcher matcher_;
+        };
+
+        class DoubleStarIterator : public SubPathIterator
+        {
+        public:
+            explicit DoubleStarIterator(PathMatcher matcher)
+                : matcher_(std::move(matcher))
+            {
+            }
+
+            void set_base_path(std::filesystem::path base_path) override
+            {
+                base_path_ = std::move(base_path);
+                it_ = std::filesystem::recursive_directory_iterator(base_path_);
+                end_ = end(it_);
+            }
+
+            bool next() override
+            {
+                while (it_ != end_)
                 {
-                    current_path_ = it_->path();
+                    if (matcher_.match(it_->path()))
+                    {
+                        current_path_ = it_->path();
+                        ++it_;
+                        return true;
+                    }
                     ++it_;
-                    return true;
                 }
-                ++it_;
+                return false;
             }
-            return false;
-        }
 
-        [[nodiscard]]
-        std::filesystem::path path() const override
-        {
-            return current_path_;
-        }
-
-    private:
-        std::filesystem::recursive_directory_iterator it_;
-        std::filesystem::recursive_directory_iterator end_;
-        std::filesystem::path base_path_;
-        std::filesystem::path current_path_;
-        PathMatcher matcher_;
-    };
-
-    std::filesystem::path
-    make_path(const std::filesystem::path::const_iterator& begin,
-              const std::filesystem::path::const_iterator& end,
-              std::filesystem::path prefix = {})
-    {
-        std::filesystem::path path = std::move(prefix);
-        for (auto it = begin; it != end; ++it)
-            path /= *it;
-        return path;
-    }
-
-    void handle_plain_path(std::vector<std::unique_ptr<SubPathIterator>>& iterators,
-                           std::filesystem::path& path)
-    {
-        if (!path.empty())
-        {
-            iterators.emplace_back(
-                std::make_unique<SinglePathIterator>(std::move(path),
-                                                     iterators.empty()));
-            path = std::filesystem::path();
-        }
-    }
-
-    std::vector<std::unique_ptr<SubPathIterator>>
-    parse_glob_path(const std::filesystem::path& path,
-                    const GlobOptions& options)
-    {
-        std::vector<std::unique_ptr<SubPathIterator>> result;
-        std::filesystem::path plain_path;
-
-        for (auto it = path.begin(), end = path.end(); it != end; ++it)
-        {
-            auto name = it->u8string();
-            if (name == u8"**")
+            [[nodiscard]]
+            std::filesystem::path path() const override
             {
-                handle_plain_path(result, plain_path);
-                result.emplace_back(std::make_unique<DoubleStarIterator>(
-                    PathMatcher(make_path(++it, end, u8"**"))));
-                break;
+                return current_path_;
             }
 
-            if (is_glob_pattern(ystring::to_string_view(name)))
+        private:
+            std::filesystem::recursive_directory_iterator it_;
+            std::filesystem::recursive_directory_iterator end_;
+            std::filesystem::path base_path_;
+            std::filesystem::path current_path_;
+            PathMatcher matcher_;
+        };
+
+        std::filesystem::path
+        make_path(const std::filesystem::path::const_iterator& begin,
+                  const std::filesystem::path::const_iterator& end,
+                  std::filesystem::path prefix = {})
+        {
+            std::filesystem::path path = std::move(prefix);
+            for (auto it = begin; it != end; ++it)
+                path /= *it;
+            return path;
+        }
+
+        void handle_plain_path(std::vector<std::unique_ptr<SubPathIterator>>& iterators,
+                               std::filesystem::path& path)
+        {
+            if (!path.empty())
             {
-                handle_plain_path(result, plain_path);
-                result.emplace_back(std::make_unique<GlobIterator>(
-                    GlobMatcher(ystring::to_string_view(name), options)));
-            }
-            else
-            {
-                plain_path /= *it;
+                iterators.emplace_back(
+                    std::make_unique<SinglePathIterator>(std::move(path),
+                                                         iterators.empty()));
+                path = std::filesystem::path();
             }
         }
 
-        handle_plain_path(result, plain_path);
-        return result;
+        std::vector<std::unique_ptr<SubPathIterator>>
+        parse_glob_path(const std::filesystem::path& path,
+                        GlobFlags flags)
+        {
+            std::vector<std::unique_ptr<SubPathIterator>> result;
+            std::filesystem::path plain_path;
+
+            for (auto it = path.begin(), end = path.end(); it != end; ++it)
+            {
+                auto name = it->u8string();
+                if (name == u8"**")
+                {
+                    handle_plain_path(result, plain_path);
+                    result.emplace_back(std::make_unique<DoubleStarIterator>(
+                        PathMatcher(make_path(++it, end, u8"**"))));
+                    break;
+                }
+
+                if (is_glob_pattern(ystring::to_string_view(name)))
+                {
+                    handle_plain_path(result, plain_path);
+                    result.emplace_back(std::make_unique<GlobIterator>(
+                        GlobMatcher(ystring::to_string_view(name), flags)));
+                }
+                else
+                {
+                    plain_path /= *it;
+                }
+            }
+
+            handle_plain_path(result, plain_path);
+            return result;
+        }
+
+        GlobFlags to_glob_flags(PathIteratorFlags flags)
+        {
+            GlobFlags result = {};
+            if (bool(flags & PathIteratorFlags::CASE_SENSITIVE))
+                result |= GlobFlags::CASE_SENSITIVE;
+            if (bool(flags & PathIteratorFlags::USE_BRACES))
+                result |= GlobFlags::USE_BRACES;
+            if (bool(flags & PathIteratorFlags::USE_SETS))
+                result |= GlobFlags::USE_SETS;
+            return result;
+        }
     }
 
     class PathIterator::PathIteratorImpl
     {
     public:
         explicit PathIteratorImpl(const std::filesystem::path& glob_path,
-                                  const GlobOptions& options)
-            : iterators_(parse_glob_path(glob_path, options))
+                                  PathIteratorFlags flags)
+            : iterators_(parse_glob_path(glob_path, to_glob_flags(flags))),
+              flags_(flags)
         {}
 
         bool next()
@@ -276,13 +293,14 @@ namespace Yglob
         }
 
         std::vector<std::unique_ptr<SubPathIterator>> iterators_;
+        PathIteratorFlags flags_;
     };
 
     PathIterator::PathIterator() = default;
 
     PathIterator::PathIterator(const std::filesystem::path& glob_path,
-                               const GlobOptions& options)
-        : impl_(std::make_unique<PathIteratorImpl>(glob_path, options))
+                               PathIteratorFlags flags)
+        : impl_(std::make_unique<PathIteratorImpl>(glob_path, flags))
     {}
 
     PathIterator::~PathIterator() = default;

@@ -9,18 +9,12 @@
 #include <iosfwd>
 #include <memory>
 #include <string_view>
+#include "GlobFlags.hpp"
 #include "YglobDefinitions.hpp"
 
 namespace Yglob
 {
     struct GlobElements;
-
-    struct GlobOptions
-    {
-        bool case_sensitive = true;
-        bool support_braces = true;
-        bool support_sets = true;
-    };
 
     class YGLOB_API GlobMatcher
     {
@@ -28,7 +22,7 @@ namespace Yglob
         GlobMatcher();
 
         explicit GlobMatcher(std::string_view pattern,
-                             const GlobOptions& options = {});
+                             GlobFlags flags = GlobFlags::DEFAULT);
 
         GlobMatcher(const GlobMatcher& rhs);
 
@@ -56,5 +50,6 @@ namespace Yglob
 
     [[nodiscard]]
     YGLOB_API bool
-    is_glob_pattern(std::string_view str, const GlobOptions& options = {});
+    is_glob_pattern(std::string_view str,
+                    GlobFlags flags = GlobFlags::DEFAULT);
 }

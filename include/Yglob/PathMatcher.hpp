@@ -9,7 +9,8 @@
 #include <filesystem>
 #include <memory>
 #include <string_view>
-#include "GlobMatcher.hpp"
+#include "GlobFlags.hpp"
+#include "YglobDefinitions.hpp"
 
 namespace Yglob
 {
@@ -19,9 +20,10 @@ namespace Yglob
         PathMatcher();
 
         explicit PathMatcher(std::string_view pattern,
-                             const GlobOptions& options = {});
+                             GlobFlags flags = GlobFlags::DEFAULT);
 
-        explicit PathMatcher(const std::filesystem::path& pattern);
+        explicit PathMatcher(const std::filesystem::path& pattern,
+                             GlobFlags flags = GlobFlags::DEFAULT);
 
         PathMatcher(const PathMatcher& rhs);
 

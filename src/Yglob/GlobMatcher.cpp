@@ -16,11 +16,11 @@ namespace Yglob
     GlobMatcher::GlobMatcher() = default;
 
     GlobMatcher::GlobMatcher(std::string_view pattern,
-                             const GlobOptions& options)
-        : case_sensitive(options.case_sensitive),
+                             GlobFlags flags)
+        : case_sensitive(bool(flags & GlobFlags::CASE_SENSITIVE)),
           pattern_(parse_glob_pattern(pattern,
-                                      {options.support_braces,
-                                       options.support_sets}))
+                                      {bool(flags & GlobFlags::USE_BRACES),
+                                       bool(flags & GlobFlags::USE_SETS)}))
 
     {}
 
@@ -74,9 +74,14 @@ namespace Yglob
         return os;
     }
 
-    bool is_glob_pattern(std::string_view str, const GlobOptions& options)
+    bool is_glob_pattern(std::string_view str, GlobFlags flags)
     {
-        GlobParserOptions parser_opts{options.support_braces, options.support_sets};
+        GlobParserOptions parser_opts
+        {
+            bool(flags & GlobFlags::USE_BRACES),
+            bool(flags & GlobFlags::USE_SETS)
+        };
+
         while (!str.empty())
         {
             switch (next_token_type(str, parser_opts))

@@ -19,8 +19,8 @@ namespace Yglob
                              GlobFlags flags)
         : case_sensitive(bool(flags & GlobFlags::CASE_SENSITIVE)),
           pattern_(parse_glob_pattern(pattern,
-                                      {bool(flags & GlobFlags::USE_BRACES),
-                                       bool(flags & GlobFlags::USE_SETS)}))
+                                      {!bool(flags & GlobFlags::NO_BRACES),
+                                       !bool(flags & GlobFlags::NO_SETS)}))
 
     {}
 
@@ -78,8 +78,8 @@ namespace Yglob
     {
         GlobParserOptions parser_opts
         {
-            bool(flags & GlobFlags::USE_BRACES),
-            bool(flags & GlobFlags::USE_SETS)
+            !bool(flags & GlobFlags::NO_BRACES),
+            !bool(flags & GlobFlags::NO_SETS)
         };
 
         while (!str.empty())

@@ -9,159 +9,12 @@
 #include <Ystring/Algorithms.hpp>
 #include "Yglob/GlobMatcher.hpp"
 #include "Yglob/PathMatcher.hpp"
+#include "PathPartIterator.hpp"
 
 namespace Yglob
 {
     namespace
     {
-        class SubPathIterator
-        {
-        public:
-            virtual ~SubPathIterator() = default;
-
-            virtual void set_base_path(std::filesystem::path base_path) = 0;
-
-            virtual bool next() = 0;
-
-            bool next_directory()
-            {
-                while (next())
-                {
-                    if (std::filesystem::is_directory(path()))
-                        return true;
-                }
-                return false;
-            }
-
-            [[nodiscard]]
-            virtual std::filesystem::path path() const = 0;
-        };
-
-        class SinglePathIterator : public SubPathIterator
-        {
-        public:
-            SinglePathIterator(std::filesystem::path path, bool has_next)
-                : path_(std::move(path)),
-                  has_next_(has_next)
-            {
-            }
-
-            void set_base_path(std::filesystem::path base_path) override
-            {
-                base_path_ = std::move(base_path);
-                has_next_ = true;
-            }
-
-            bool next() override
-            {
-                if (!has_next_)
-                    return false;
-
-                has_next_ = false;
-                return exists(base_path_ / path_);
-            }
-
-            [[nodiscard]]
-            std::filesystem::path path() const override
-            {
-                return base_path_ / path_;
-            }
-
-        public:
-            std::filesystem::path base_path_;
-            std::filesystem::path path_;
-            bool has_next_ = true;
-        };
-
-        class GlobIterator : public SubPathIterator
-        {
-        public:
-            explicit GlobIterator(GlobMatcher matcher)
-                : matcher_(std::move(matcher))
-            {
-            }
-
-            bool next() override
-            {
-                while (it_ != end_)
-                {
-                    auto filename = it_->path().filename().u8string();
-                    if (matcher_.match(ystring::to_string_view(filename)))
-                    {
-                        current_path_ = it_->path();
-                        ++it_;
-                        return true;
-                    }
-                    ++it_;
-                }
-                return false;
-            }
-
-            void set_base_path(std::filesystem::path base_path) override
-            {
-                base_path_ = std::move(base_path);
-                it_ = std::filesystem::directory_iterator(base_path_);
-                end_ = end(it_);
-            }
-
-            [[nodiscard]]
-            std::filesystem::path path() const override
-            {
-                return current_path_;
-            }
-
-        private:
-            std::filesystem::directory_iterator it_;
-            std::filesystem::directory_iterator end_;
-            std::filesystem::path base_path_;
-            std::filesystem::path current_path_;
-            GlobMatcher matcher_;
-        };
-
-        class DoubleStarIterator : public SubPathIterator
-        {
-        public:
-            explicit DoubleStarIterator(PathMatcher matcher)
-                : matcher_(std::move(matcher))
-            {
-            }
-
-            void set_base_path(std::filesystem::path base_path) override
-            {
-                base_path_ = std::move(base_path);
-                it_ = std::filesystem::recursive_directory_iterator(base_path_);
-                end_ = end(it_);
-            }
-
-            bool next() override
-            {
-                while (it_ != end_)
-                {
-                    if (matcher_.match(it_->path()))
-                    {
-                        current_path_ = it_->path();
-                        ++it_;
-                        return true;
-                    }
-                    ++it_;
-                }
-                return false;
-            }
-
-            [[nodiscard]]
-            std::filesystem::path path() const override
-            {
-                return current_path_;
-            }
-
-        private:
-            std::filesystem::recursive_directory_iterator it_;
-            std::filesystem::recursive_directory_iterator end_;
-            std::filesystem::path base_path_;
-            std::filesystem::path current_path_;
-            PathMatcher matcher_;
-        };
-
         std::filesystem::path
         make_path(const std::filesystem::path::const_iterator& begin,
                   const std::filesystem::path::const_iterator& end,
@@ -173,7 +26,7 @@ namespace Yglob
             return path;
         }
 
-        void handle_plain_path(std::vector<std::unique_ptr<SubPathIterator>>& iterators,
+        void handle_plain_path(std::vector<std::unique_ptr<PathPartIterator>>& iterators,
                                std::filesystem::path& path)
         {
             if (!path.empty())
@@ -185,11 +38,11 @@ namespace Yglob
             }
         }
 
-        std::vector<std::unique_ptr<SubPathIterator>>
+        std::vector<std::unique_ptr<PathPartIterator>>
         parse_glob_path(const std::filesystem::path& path,
                         GlobFlags flags)
         {
-            std::vector<std::unique_ptr<SubPathIterator>> result;
+            std::vector<std::unique_ptr<PathPartIterator>> result;
             std::filesystem::path plain_path;
 
             for (auto it = path.begin(), end = path.end(); it != end; ++it)
@@ -224,10 +77,10 @@ namespace Yglob
             GlobFlags result = {};
             if (bool(flags & PathIteratorFlags::CASE_SENSITIVE))
                 result |= GlobFlags::CASE_SENSITIVE;
-            if (bool(flags & PathIteratorFlags::USE_BRACES))
-                result |= GlobFlags::USE_BRACES;
-            if (bool(flags & PathIteratorFlags::USE_SETS))
-                result |= GlobFlags::USE_SETS;
+            if (bool(flags & PathIteratorFlags::NO_BRACES))
+                result |= GlobFlags::NO_BRACES;
+            if (bool(flags & PathIteratorFlags::NO_SETS))
+                result |= GlobFlags::NO_SETS;
             return result;
         }
     }
@@ -279,7 +132,7 @@ namespace Yglob
         }
 
     private:
-        using Container = std::vector<std::unique_ptr<SubPathIterator>>;
+        using Container = std::vector<std::unique_ptr<PathPartIterator>>;
 
         bool find_prev_with_next(Container::const_iterator& it) const
         {
@@ -292,7 +145,7 @@ namespace Yglob
             return false;
         }
 
-        std::vector<std::unique_ptr<SubPathIterator>> iterators_;
+        std::vector<std::unique_ptr<PathPartIterator>> iterators_;
         PathIteratorFlags flags_;
     };
 

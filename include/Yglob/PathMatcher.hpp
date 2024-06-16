@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <memory>
 #include <string_view>
-#include "GlobFlags.hpp"
+#include "Flags.hpp"
 #include "YglobDefinitions.hpp"
 
 namespace Yglob

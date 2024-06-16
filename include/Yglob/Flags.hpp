@@ -13,12 +13,23 @@ namespace Yglob
 {
     enum class GlobFlags
     {
-        NONE = 0,
+        DEFAULT = 0,
         CASE_SENSITIVE = 1,
-        USE_BRACES = 2,
-        USE_SETS = 4,
-        DEFAULT = CASE_SENSITIVE | USE_BRACES | USE_SETS
+        NO_BRACES = 2,
+        NO_SETS = 4
     };
 
     YGLOB_ENABLE_BITMASK_OPERATORS(GlobFlags);
+
+    enum class PathIteratorFlags : unsigned
+    {
+        DEFAULT = 0,
+        CASE_SENSITIVE = 1,
+        NO_BRACES = 2,
+        NO_SETS = 4,
+        NO_FILES = 8,
+        NO_DIRECTORIES = 16
+    };
+
+    YGLOB_ENABLE_BITMASK_OPERATORS(PathIteratorFlags);
 }

@@ -163,6 +163,8 @@ namespace Yglob
         return std::visit(EndsWithVisitor{str, case_sensitive}, part);
     }
 
+    // NOLINTBEGIN(misc-no-recursion)
+
     bool match_fwd(std::span<GlobElement> parts, std::string_view& str,
                    bool case_sensitive, bool is_subpattern)
     {

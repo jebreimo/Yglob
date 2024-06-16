@@ -17,9 +17,9 @@ FetchContent_MakeAvailable(catch)
 add_executable(YglobTest
     test_GlobMatcher.cpp
     test_GlobPattern.cpp
+    test_PathIterator.cpp
     test_PathMatcher.cpp
     TempFiles.hpp
-    test_PathIterator.cpp
 )
 
 target_link_libraries(YglobTest

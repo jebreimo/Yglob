@@ -40,23 +40,25 @@ FetchContent_Declare(ystring
 FetchContent_MakeAvailable(ystring)
 
 add_library(Yglob STATIC
+    include/Yglob/BitmaskOperators.hpp
+    include/Yglob/Flags.hpp
     include/Yglob/GlobMatcher.hpp
+    include/Yglob/PathIterator.hpp
     include/Yglob/PathMatcher.hpp
+    include/Yglob/Yglob.hpp
     include/Yglob/YglobDefinitions.hpp
-    src/Yglob/GlobMatcher.cpp
+    include/Yglob/YglobException.hpp
     src/Yglob/GlobElements.cpp
     src/Yglob/GlobElements.hpp
-    src/Yglob/ParseGlobPattern.hpp
-    src/Yglob/PathMatcher.cpp
+    src/Yglob/GlobMatcher.cpp
     src/Yglob/MatchGlobPattern.cpp
     src/Yglob/MatchGlobPattern.hpp
     src/Yglob/ParseGlobPattern.cpp
+    src/Yglob/ParseGlobPattern.hpp
     src/Yglob/PathIterator.cpp
-    include/Yglob/PathIterator.hpp
-    include/Yglob/Yglob.hpp
-    include/Yglob/YglobException.hpp
-    include/Yglob/GlobFlags.hpp
-    include/Yglob/BitmaskOperators.hpp
+    src/Yglob/PathMatcher.cpp
+    src/Yglob/PathPartIterator.cpp
+    src/Yglob/PathPartIterator.hpp
 )
 
 target_link_libraries(Yglob

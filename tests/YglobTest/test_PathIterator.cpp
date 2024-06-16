@@ -21,9 +21,8 @@ namespace
 
 TEST_CASE("PathIterator with absolute paths")
 {
-    if (std::filesystem::exists("YglobTest"))
-        std::filesystem::remove_all("YglobTest");
-    TempFiles files{"YglobTest/abc.txt", "YglobTest/def.txt", "YglobTest/ghi.txt"};
+    TempFiles files("YglobTest", true);
+    files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
 
     auto file_paths = files.files();
 
@@ -32,7 +31,7 @@ TEST_CASE("PathIterator with absolute paths")
     REQUIRE(it.path() == file_paths[0]);
     REQUIRE_FALSE(it.next());
 
-    it = Yglob::PathIterator(files.get_path("YglobTest/*.txt"));
+    it = Yglob::PathIterator(files.get_path("a/*.txt"));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, it.path()));
     REQUIRE(it.next());
@@ -44,25 +43,67 @@ TEST_CASE("PathIterator with absolute paths")
 
 TEST_CASE("PathIterator with local paths")
 {
-    if (std::filesystem::exists("YglobTest"))
-        std::filesystem::remove_all("YglobTest");
-    TempFiles files{"YglobTest/abc.txt", "YglobTest/def.txt", "YglobTest/ghi.txt"};
+    TempFiles files("YglobTest", true);
+    files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
 
     std::filesystem::current_path(files.base_directory());
 
     auto file_paths = files.files();
 
-    Yglob::PathIterator it("YglobTest/abc.txt");
+    Yglob::PathIterator it("a/abc.txt");
     REQUIRE(it.next());
     REQUIRE(absolute(it.path()) == file_paths[0]);
     REQUIRE_FALSE(it.next());
 
-    it = Yglob::PathIterator("YglobTest/*.txt");
+    it = Yglob::PathIterator("a/*.txt");
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, absolute(it.path())));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, absolute(it.path())));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, absolute(it.path())));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("PathIterator with recursive paths and just files")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"abc.txt", "a/def.txt", "b/ghi.txt"});
+
+    auto file_paths = files.files();
+
+    Yglob::PathIterator it(files.get_path("**"),
+                           Yglob::PathIteratorFlags::NO_DIRECTORIES);
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE_FALSE(it.next());
+
+    it = Yglob::PathIterator(files.get_path("*/**"));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("PathIterator with recursive paths and no files")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"abc.txt", "a/def.txt", "b/ghi.txt"});
+
+    auto dir_paths = files.directories();
+    // Remove YglobTest itself.
+    dir_paths.erase(dir_paths.begin());
+
+    Yglob::PathIterator it(files.get_path("**"),
+                           Yglob::PathIteratorFlags::NO_FILES);
+    REQUIRE(it.next());
+    REQUIRE(contains(dir_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(dir_paths, it.path()));
     REQUIRE_FALSE(it.next());
 }

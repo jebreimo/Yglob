@@ -1,14 +1,25 @@
-//****************************************************************************
+//****************************************************************************curr
 // Copyright © 2024 Jan Erik Breimo. All rights reserved.
 // Created by Jan Erik Breimo on 2024-06-16.
 //
 // This file is distributed under the BSD License.
-// License text is included with the source distribution.
+// License text is included with
+// the source distribution.curr
 //****************************************************************************
 #include "PathPartIterator.hpp"
 
 namespace Yglob
 {
+    bool PathPartIterator::next_directory()
+    {
+        while (next())
+        {
+            if (std::filesystem::is_directory(path()))
+                return true;
+        }
+        return false;
+    }
+
     SinglePathIterator::SinglePathIterator(std::filesystem::path path, bool has_next)
         : path_(std::move(path)),
           has_next_(has_next)
@@ -27,12 +38,13 @@ namespace Yglob
             return false;
 
         has_next_ = false;
-        return exists(base_path_ / path_);
+        current_path_ = base_path_ / path_;
+        return exists(current_path_);
     }
 
-    std::filesystem::path SinglePathIterator::path() const
+    const std::filesystem::path& SinglePathIterator::path() const
     {
-        return base_path_ / path_;
+        return current_path_;
     }
 
     GlobIterator::GlobIterator(GlobMatcher matcher)
@@ -63,7 +75,7 @@ namespace Yglob
         end_ = end(it_);
     }
 
-    std::filesystem::path GlobIterator::path() const
+    const std::filesystem::path& GlobIterator::path() const
     {
         return current_path_;
     }
@@ -95,18 +107,8 @@ namespace Yglob
         return false;
     }
 
-    std::filesystem::path DoubleStarIterator::path() const
+    const std::filesystem::path& DoubleStarIterator::path() const
     {
         return current_path_;
-    }
-
-    bool PathPartIterator::next_directory()
-    {
-        while (next())
-        {
-            if (std::filesystem::is_directory(path()))
-                return true;
-        }
-        return false;
     }
 }

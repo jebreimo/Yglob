@@ -24,7 +24,7 @@ namespace Yglob
         bool next_directory();
 
         [[nodiscard]]
-        virtual std::filesystem::path path() const = 0;
+        virtual const std::filesystem::path& path() const = 0;
     };
 
     class SinglePathIterator : public PathPartIterator
@@ -37,11 +37,12 @@ namespace Yglob
         bool next() override;
 
         [[nodiscard]]
-        std::filesystem::path path() const override;
+        const std::filesystem::path& path() const override;
 
     public:
         std::filesystem::path base_path_;
         std::filesystem::path path_;
+        std::filesystem::path current_path_;
         bool has_next_ = true;
     };
 
@@ -55,7 +56,7 @@ namespace Yglob
         void set_base_path(std::filesystem::path base_path) override;
 
         [[nodiscard]]
-        std::filesystem::path path() const override;
+        const std::filesystem::path& path() const override;
 
     private:
         std::filesystem::directory_iterator it_;
@@ -75,7 +76,7 @@ namespace Yglob
         bool next() override;
 
         [[nodiscard]]
-        std::filesystem::path path() const override;
+        const std::filesystem::path& path() const override;
 
     private:
         std::filesystem::recursive_directory_iterator it_;

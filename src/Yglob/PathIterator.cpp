@@ -18,9 +18,9 @@ namespace Yglob
         std::filesystem::path
         make_path(const std::filesystem::path::const_iterator& begin,
                   const std::filesystem::path::const_iterator& end,
-                  std::filesystem::path prefix = {})
+                  const std::filesystem::path& prefix)
         {
-            std::filesystem::path path = std::move(prefix);
+            std::filesystem::path path = prefix;
             for (auto it = begin; it != end; ++it)
                 path /= *it;
             return path;
@@ -98,8 +98,11 @@ namespace Yglob
         {
             if (iterators_.empty())
                 return false;
-            if (iterators_.back()->next())
-                return true;
+            while (iterators_.back()->next())
+            {
+                if (is_acceptable(iterators_.back()->path()))
+                    return true;
+            }
 
             auto last = --iterators_.cend();
             auto it = last;
@@ -119,8 +122,11 @@ namespace Yglob
                 if (it == last)
                 {
                     (*it)->set_base_path(std::move(path));
-                    if ((*it)->next())
-                        return true;
+                    while ((*it)->next())
+                    {
+                        if (is_acceptable((*it)->path()))
+                            return true;
+                    }
                 }
             }
         }
@@ -143,6 +149,15 @@ namespace Yglob
                     return true;
             }
             return false;
+        }
+
+        [[nodiscard]]
+        bool is_acceptable(const std::filesystem::path& path) const
+        {
+            auto no_files = bool(flags_ & PathIteratorFlags::NO_FILES);
+            auto no_dirs = bool(flags_ & PathIteratorFlags::NO_DIRECTORIES);
+            return (!no_files || !std::filesystem::is_regular_file(path))
+                   && (!no_dirs || !std::filesystem::is_directory(path));
         }
 
         std::vector<std::unique_ptr<PathPartIterator>> iterators_;

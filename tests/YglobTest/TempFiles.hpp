@@ -15,11 +15,18 @@
 class TempFiles
 {
 public:
-    TempFiles(std::initializer_list<std::filesystem::path> sub_paths)
+    explicit TempFiles(const std::filesystem::path& base_path,
+                       bool erase = false)
+        : base_path_(get_base_path(base_path))
     {
-        tmp_path = canonical(std::filesystem::temp_directory_path());
-        for (auto& sub_path: sub_paths)
-            make_file(tmp_path / sub_path);
+        if (erase && std::filesystem::exists(base_path_))
+            std::filesystem::remove_all(base_path_);
+        if (!std::filesystem::exists(base_path_))
+        {
+            std::filesystem::create_directories(base_path_);
+            dirs_.push_back(base_path_);
+        }
+        base_path_ = std::filesystem::canonical(base_path_);
     }
 
     ~TempFiles()
@@ -37,10 +44,38 @@ public:
         }
     }
 
+    TempFiles& make_file(const std::filesystem::path& path)
+    {
+        auto real_path = base_path_ / path;
+        if (std::filesystem::exists(real_path))
+            return *this;
+
+        make_directory_impl(real_path.parent_path());
+        auto contents = path.u8string();
+        std::ofstream(real_path).write(
+            reinterpret_cast<const char*>(contents.data()),
+            std::streamsize(contents.size()));
+        files_.push_back(real_path);
+        return *this;
+    }
+
+    TempFiles& make_files(const std::vector<std::filesystem::path>& paths)
+    {
+        for (auto& path: paths)
+            make_file(path);
+        return *this;
+    }
+
+    TempFiles& make_directory(const std::filesystem::path& path)
+    {
+        make_directory_impl(base_path_ / path);
+        return *this;
+    }
+
     [[nodiscard]]
     std::filesystem::path base_directory() const
     {
-        return tmp_path;
+        return base_path_;
     }
 
     [[nodiscard]]
@@ -50,38 +85,44 @@ public:
     }
 
     [[nodiscard]]
+    std::vector<std::filesystem::path> directories() const
+    {
+        return dirs_;
+    }
+
+    [[nodiscard]]
     std::filesystem::path get_path(const std::filesystem::path& path) const
     {
-        return tmp_path / path;
+        return base_path_ / path;
     }
 
 private:
-    void create_dirs(std::filesystem::path path)
+    static std::filesystem::path
+    get_base_path(const std::filesystem::path& base_path)
     {
-        std::vector<std::filesystem::path> dirs_to_create;
-        while (path != path.root_path() && !std::filesystem::exists(path))
-        {
-            dirs_to_create.push_back(path);
-            path = path.parent_path();
-        }
-        for (auto& it: std::ranges::reverse_view(dirs_to_create))
-        {
-            std::filesystem::create_directory(it);
-            dirs_.push_back(it);
-        }
+        std::filesystem::path path;
+        if (base_path.is_absolute())
+            return base_path;
+        return std::filesystem::temp_directory_path() / base_path;
     }
 
-    void make_file(const std::filesystem::path& path)
+    void make_directory_impl(const std::filesystem::path& path)
     {
-        if (std::filesystem::exists(path))
-            return;
+        std::vector<std::filesystem::path> dirs;
 
-        create_dirs(path.parent_path());
-        std::ofstream(path) << "Hello, world!";
-        files_.push_back(path);
+        auto tmp = path;
+        while (!std::filesystem::exists(tmp))
+        {
+            dirs.push_back(tmp);
+            tmp = tmp.parent_path();
+        }
+
+        dirs_.insert(dirs_.end(), dirs.rbegin(), dirs.rend());
+
+        std::filesystem::create_directories(path);
     }
 
-    std::filesystem::path tmp_path;
+    std::filesystem::path base_path_;
     std::vector<std::filesystem::path> dirs_;
     std::vector<std::filesystem::path> files_;
 };

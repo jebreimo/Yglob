@@ -69,7 +69,8 @@ namespace Yglob
         [[nodiscard]]
         bool match(const std::filesystem::path& path) const
         {
-            std::span elements(elements_.data(), elements_.size());
+            std::span<const PathElement> elements(elements_.data(),
+                                                  elements_.size());
             return match(elements, path);
         }
     private:

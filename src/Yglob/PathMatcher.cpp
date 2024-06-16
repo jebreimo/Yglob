@@ -59,7 +59,11 @@ namespace Yglob
                 if (parent_path == pattern)
                 {
                     if (!parent_path.empty())
-                        elements_.emplace_back(parent_path);
+                    {
+                        filename_u8 = parent_path.u8string();
+                        filename_view = ystring::to_string_view(filename_u8);
+                        elements_.emplace_back(std::string(filename_view));
+                    }
                     break;
                 }
                 pattern = parent_path;
@@ -69,8 +73,7 @@ namespace Yglob
         [[nodiscard]]
         bool match(const std::filesystem::path& path) const
         {
-            std::span<const PathElement> elements(elements_.data(),
-                                                  elements_.size());
+            std::span elements(elements_.data(), elements_.size());
             return match(elements, path);
         }
     private:

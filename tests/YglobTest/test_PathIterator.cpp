@@ -8,6 +8,7 @@
 #include "Yglob/PathIterator.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include "Auto.hpp"
 #include "TempFiles.hpp"
 
 namespace
@@ -46,7 +47,9 @@ TEST_CASE("PathIterator with local paths")
     TempFiles files("YglobTest", true);
     files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
 
+    auto prev_path = std::filesystem::current_path();
     std::filesystem::current_path(files.base_directory());
+    Auto(std::filesystem::current_path(prev_path));
 
     auto file_paths = files.files();
 

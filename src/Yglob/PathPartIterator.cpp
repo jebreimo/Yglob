@@ -56,7 +56,7 @@ namespace Yglob
     {
         while (it_ != end_)
         {
-            auto filename = it_->path().filename().u8string();
+            auto filename = it_->path().filename().generic_u8string();
             if (matcher_.match(ystring::to_string_view(filename)))
             {
                 current_path_ = it_->path();

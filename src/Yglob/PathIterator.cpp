@@ -47,7 +47,7 @@ namespace Yglob
 
             for (auto it = path.begin(), end = path.end(); it != end; ++it)
             {
-                auto name = it->u8string();
+                auto name = it->generic_u8string();
                 if (name == u8"**")
                 {
                     handle_plain_path(result, plain_path);

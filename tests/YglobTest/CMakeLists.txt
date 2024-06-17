@@ -15,11 +15,13 @@ FetchContent_Declare(catch
 FetchContent_MakeAvailable(catch)
 
 add_executable(YglobTest
+    TempFiles.cpp
+    TempFiles.hpp
     test_GlobMatcher.cpp
     test_GlobPattern.cpp
     test_PathIterator.cpp
     test_PathMatcher.cpp
-    TempFiles.hpp
+    Auto.hpp
 )
 
 target_link_libraries(YglobTest

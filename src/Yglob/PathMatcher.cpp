@@ -47,7 +47,7 @@ namespace Yglob
             pattern = pattern.lexically_normal();
             while (true)
             {
-                auto filename_u8 = pattern.filename().u8string();
+                auto filename_u8 = pattern.filename().generic_u8string();
                 auto filename_view = ystring::to_string_view(filename_u8);
                 if (filename_view == "**")
                     elements_.emplace_back(AnyPath{});
@@ -60,7 +60,7 @@ namespace Yglob
                 {
                     if (!parent_path.empty())
                     {
-                        filename_u8 = parent_path.u8string();
+                        filename_u8 = parent_path.generic_u8string();
                         filename_view = ystring::to_string_view(filename_u8);
                         elements_.emplace_back(std::string(filename_view));
                     }
@@ -93,7 +93,7 @@ namespace Yglob
                 if (std::holds_alternative<std::string>(element))
                 {
                     auto str = std::get<std::string>(element);
-                    auto u8str = filename.u8string();
+                    auto u8str = filename.generic_u8string();
                     if (!equal(str, ystring::to_string_view(u8str), case_sensitive_))
                         return false;
                 }
@@ -104,7 +104,7 @@ namespace Yglob
                 else if (std::holds_alternative<GlobMatcher>(element))
                 {
                     auto& matcher = std::get<GlobMatcher>(element);
-                    if (!matcher.match(ystring::to_string_view(filename.u8string())))
+                    if (!matcher.match(ystring::to_string_view(filename.generic_u8string())))
                         return false;
                 }
                 if (parent == path)

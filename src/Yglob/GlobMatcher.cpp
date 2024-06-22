@@ -25,12 +25,14 @@ namespace Yglob
     {}
 
     GlobMatcher::GlobMatcher(const GlobMatcher& rhs)
-        : pattern_(rhs.pattern_ ? std::make_unique<GlobElements>(*rhs.pattern_)
+        : case_sensitive(rhs.case_sensitive),
+          pattern_(rhs.pattern_ ? std::make_unique<GlobElements>(*rhs.pattern_)
                                 : nullptr)
     {}
 
     GlobMatcher::GlobMatcher(GlobMatcher&& rhs) noexcept
-        : pattern_(std::move(rhs.pattern_))
+        : case_sensitive(rhs.case_sensitive),
+          pattern_(std::move(rhs.pattern_))
     {}
 
     GlobMatcher::~GlobMatcher() = default;

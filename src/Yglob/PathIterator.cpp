@@ -38,13 +38,26 @@ namespace Yglob
             }
         }
 
+        GlobFlags to_glob_flags(PathIteratorFlags flags)
+        {
+            GlobFlags result = {};
+            if (bool(flags & PathIteratorFlags::CASE_SENSITIVE_GLOBS))
+                result |= GlobFlags::CASE_SENSITIVE;
+            if (bool(flags & PathIteratorFlags::NO_BRACES))
+                result |= GlobFlags::NO_BRACES;
+            if (bool(flags & PathIteratorFlags::NO_SETS))
+                result |= GlobFlags::NO_SETS;
+            return result;
+        }
+
         std::vector<std::unique_ptr<PathPartIterator>>
         parse_glob_path(const std::filesystem::path& path,
-                        GlobFlags flags)
+                        PathIteratorFlags flags)
         {
             std::vector<std::unique_ptr<PathPartIterator>> result;
             std::filesystem::path plain_path;
 
+            auto case_insensitive_paths = bool(flags & PathIteratorFlags::CASE_INSENSITIVE_PATHS);
             for (auto it = path.begin(), end = path.end(); it != end; ++it)
             {
                 auto name = it->generic_u8string();
@@ -56,11 +69,20 @@ namespace Yglob
                     break;
                 }
 
-                if (is_glob_pattern(ystring::to_string_view(name)))
+                std::optional<GlobFlags> glob_flags;
+                if (case_insensitive_paths && !it->has_root_path())
+                    glob_flags = GlobFlags::NO_SETS | GlobFlags::NO_BRACES;
+                else if (is_glob_pattern(ystring::to_string_view(name)))
+                    glob_flags = to_glob_flags(flags);
+
+                if (glob_flags)
                 {
                     handle_plain_path(result, plain_path);
                     result.emplace_back(std::make_unique<GlobIterator>(
-                        GlobMatcher(ystring::to_string_view(name), flags)));
+                        GlobMatcher(ystring::to_string_view(name),
+                                    *glob_flags)));
+                    if (result.size() == 1)
+                        result.back()->set_base_path(".");
                 }
                 else
                 {
@@ -71,18 +93,6 @@ namespace Yglob
             handle_plain_path(result, plain_path);
             return result;
         }
-
-        GlobFlags to_glob_flags(PathIteratorFlags flags)
-        {
-            GlobFlags result = {};
-            if (bool(flags & PathIteratorFlags::CASE_SENSITIVE))
-                result |= GlobFlags::CASE_SENSITIVE;
-            if (bool(flags & PathIteratorFlags::NO_BRACES))
-                result |= GlobFlags::NO_BRACES;
-            if (bool(flags & PathIteratorFlags::NO_SETS))
-                result |= GlobFlags::NO_SETS;
-            return result;
-        }
     }
 
     class PathIterator::PathIteratorImpl
@@ -90,7 +100,7 @@ namespace Yglob
     public:
         explicit PathIteratorImpl(const std::filesystem::path& glob_path,
                                   PathIteratorFlags flags)
-            : iterators_(parse_glob_path(glob_path, to_glob_flags(flags))),
+            : iterators_(parse_glob_path(glob_path, flags)),
               flags_(flags)
         {}
 

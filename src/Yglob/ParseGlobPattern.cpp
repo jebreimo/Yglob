@@ -7,8 +7,8 @@
 //****************************************************************************
 #include "ParseGlobPattern.hpp"
 
+#include <ranges>
 #include <Ystring/Algorithms.hpp>
-#include <Ystring/DecodeUtf8.hpp>
 #include <Ystring/Unescape.hpp>
 #include "Yglob/YglobException.hpp"
 
@@ -66,7 +66,8 @@ namespace Yglob
             HAS_FIRST,
             AWAITING_LAST
         };
-        State state = State::AWAITING_FIRST;
+
+        auto state = State::AWAITING_FIRST;
         bool did_unescape = false;
         while (auto ch = ystring::unescape_next(pattern, &did_unescape))
         {
@@ -134,12 +135,11 @@ namespace Yglob
 
     StarElement extract_stars(std::string_view& pattern)
     {
-        StarElement result;
         while (!pattern.empty() && pattern[0] == '*')
         {
             pattern.remove_prefix(1);
         }
-        return result;
+        return {};
     }
 
     QmarkElement extract_qmarks(std::string_view& pattern)
@@ -189,7 +189,7 @@ namespace Yglob
     [[nodiscard]]
     bool has_star(const GlobElement& part)
     {
-        if (auto multi_pattern = std::get_if<MultiGlob>(&part))
+        if (const auto multi_pattern = std::get_if<MultiGlob>(&part))
         {
             for (const auto& pattern: multi_pattern->patterns)
             {
@@ -203,17 +203,15 @@ namespace Yglob
     [[nodiscard]]
     bool has_star(const std::vector<GlobElement>& parts)
     {
-        return std::any_of(parts.begin(), parts.end(),
-                           [](auto& p) {return has_star(p);}
-        );
+        return std::ranges::any_of(parts, [](auto& p) {return has_star(p);});
     }
 
     void optimize(GlobElements& pattern)
     {
         pattern.tail_length = 0;
-        for (auto it = pattern.parts.rbegin(); it != pattern.parts.rend(); ++it)
+        for (auto& part : std::ranges::reverse_view(pattern.parts))
         {
-            if (has_star(*it))
+            if (has_star(part))
                 break;
             pattern.tail_length++;
         }

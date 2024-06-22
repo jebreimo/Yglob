@@ -5,10 +5,11 @@
 // This file is distributed under the BSD License.
 // License text is included with the source distribution.
 //****************************************************************************
+#include <iostream>
+
 #include "Yglob/PathIterator.hpp"
 
 #include <catch2/catch_test_macros.hpp>
-#include "Auto.hpp"
 #include "TempFiles.hpp"
 
 namespace
@@ -16,11 +17,27 @@ namespace
     bool contains(const std::vector<std::filesystem::path>& paths,
                   const std::filesystem::path& path)
     {
-        return std::find(paths.begin(), paths.end(), path) != paths.end();
+        return std::ranges::find(paths, path) != paths.end();
     }
+
+    struct AutoCwd
+    {
+        explicit AutoCwd(const std::filesystem::path& path)
+            : prev_path(std::filesystem::current_path())
+        {
+            std::filesystem::current_path(path);
+        }
+
+        ~AutoCwd()
+        {
+            std::filesystem::current_path(prev_path);
+        }
+
+        std::filesystem::path prev_path;
+    };
 }
 
-TEST_CASE("PathIterator with absolute paths")
+TEST_CASE("Case-sensitive PathIterator with absolute paths")
 {
     TempFiles files("YglobTest", true);
     files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
@@ -42,14 +59,30 @@ TEST_CASE("PathIterator with absolute paths")
     REQUIRE_FALSE(it.next());
 }
 
-TEST_CASE("PathIterator with local paths")
+TEST_CASE("Case-insensitive PathIterator with absolute paths")
 {
     TempFiles files("YglobTest", true);
     files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
 
-    auto prev_path = std::filesystem::current_path();
-    std::filesystem::current_path(files.base_directory());
-    Auto(std::filesystem::current_path(prev_path));
+    auto file_paths = files.files();
+
+    auto it = Yglob::PathIterator(files.get_path("A/*.TXT"),
+                                  Yglob::PathIteratorFlags::CASE_INSENSITIVE_PATHS);
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("Case-sensitive PathIterator with local paths")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
+
+    AutoCwd auto_cwd(files.base_directory());
 
     auto file_paths = files.files();
 
@@ -65,6 +98,44 @@ TEST_CASE("PathIterator with local paths")
     REQUIRE(contains(file_paths, absolute(it.path())));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, absolute(it.path())));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("PathIterator with local paths starting with glob")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
+
+    AutoCwd auto_cwd(files.base_directory());
+
+    auto file_paths = files.files();
+
+    Yglob::PathIterator it("*/*.txt");
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("Case-insensitive PathIterator with local paths")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"a/abc.txt", "a/def.txt", "a/ghi.txt"});
+
+    AutoCwd auto_cwd(files.base_directory());
+
+    auto file_paths = files.files();
+
+    Yglob::PathIterator it("A/*.TXT", Yglob::PathIteratorFlags::CASE_INSENSITIVE_PATHS);
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
     REQUIRE_FALSE(it.next());
 }
 
@@ -86,6 +157,15 @@ TEST_CASE("PathIterator with recursive paths and just files")
     REQUIRE_FALSE(it.next());
 
     it = Yglob::PathIterator(files.get_path("*/**"));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
+    REQUIRE_FALSE(it.next());
+
+    it = Yglob::PathIterator(files.get_path("**/*.txt"));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, it.path()));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, it.path()));
     REQUIRE(it.next());

@@ -28,8 +28,9 @@ namespace Yglob
     operator&(E lhs, E rhs)
     {
         typedef typename std::underlying_type_t<E> underlying;
-        return static_cast<E>(static_cast<underlying>(lhs)
-                              & static_cast<underlying>(rhs));
+        underlying res = static_cast<underlying>(lhs)
+                       & static_cast<underlying>(rhs);
+        return static_cast<E>(res);
     }
 
     template <typename E>

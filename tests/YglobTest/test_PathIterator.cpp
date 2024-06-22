@@ -5,10 +5,9 @@
 // This file is distributed under the BSD License.
 // License text is included with the source distribution.
 //****************************************************************************
-#include <iostream>
-
 #include "Yglob/PathIterator.hpp"
 
+#include <ranges>
 #include <catch2/catch_test_macros.hpp>
 #include "TempFiles.hpp"
 

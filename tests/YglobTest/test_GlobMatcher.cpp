@@ -187,3 +187,19 @@ TEST_CASE("Test is_glob_pattern")
     REQUIRE(is_glob_pattern("a[^b-d]"));
     REQUIRE(is_glob_pattern("a{b,c,d}"));
 }
+
+TEST_CASE("GlobMatcher with sets disabled")
+{
+    using namespace Yglob;
+    GlobMatcher matcher("a[b-d]e", GlobFlags::NO_SETS);
+    REQUIRE(matcher.match("a[b-d]e"));
+    REQUIRE(!matcher.match("abe"));
+}
+
+TEST_CASE("GlobMatcher with braces disabled")
+{
+    using namespace Yglob;
+    GlobMatcher matcher("ab{c,d,e}f", GlobFlags::NO_BRACES);
+    REQUIRE(matcher.match("ab{c,d,e}f"));
+    REQUIRE(!matcher.match("abcf"));
+}

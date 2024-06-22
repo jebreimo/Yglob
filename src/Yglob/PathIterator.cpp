@@ -66,6 +66,8 @@ namespace Yglob
                     handle_plain_path(result, plain_path);
                     result.emplace_back(std::make_unique<DoubleStarIterator>(
                         PathMatcher(make_path(++it, end, u8"**"))));
+                    if (result.size() == 1)
+                        result.back()->set_base_path(".");
                     break;
                 }
 

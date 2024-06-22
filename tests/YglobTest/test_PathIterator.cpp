@@ -190,3 +190,22 @@ TEST_CASE("PathIterator with recursive paths and no files")
     REQUIRE(contains(dir_paths, it.path()));
     REQUIRE_FALSE(it.next());
 }
+
+TEST_CASE("PathIterator with local recursive path")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"abc.txt", "a/def.txt", "b/ghi.txt"});
+
+    AutoCwd auto_cwd(files.base_directory());
+
+    auto file_paths = files.files();
+
+    Yglob::PathIterator it("**/*.txt");
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE(it.next());
+    REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE_FALSE(it.next());
+}

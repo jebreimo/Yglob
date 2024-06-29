@@ -108,7 +108,6 @@ if (YGLOB_INSTALL)
     install(
         FILES
             ${PUBLIC_INCLUDES}
-            ${CMAKE_CURRENT_BINARY_DIR}/YglobVersion.hpp
         DESTINATION
             ${CMAKE_INSTALL_INCLUDEDIR}/Yglob
     )

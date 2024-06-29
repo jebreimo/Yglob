@@ -144,7 +144,7 @@ namespace Yglob
         }
 
         [[nodiscard]]
-        std::filesystem::path path() const
+        const std::filesystem::path& path() const
         {
             return iterators_.back()->path();
         }
@@ -201,8 +201,9 @@ namespace Yglob
         return impl_ && impl_->next();
     }
 
-    std::filesystem::path PathIterator::path() const
+    const std::filesystem::path& PathIterator::path() const
     {
-        return impl_ ? impl_->path() : std::filesystem::path();
+        static const std::filesystem::path empty_path;
+        return impl_ ? impl_->path() : empty_path;
     }
 }

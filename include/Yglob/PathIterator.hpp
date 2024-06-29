@@ -39,6 +39,12 @@ namespace Yglob
         std::unique_ptr<PathIteratorImpl> impl_;
     };
 
+    /**
+     * @brief Adapts a PathIterator to be used in range-based for loops.
+     *
+     * This class is not intended to be used directly, use the begin() and
+     * end() functions on PathIterator instead.
+     */
     class PathInputIteratorAdapter
     {
     public:

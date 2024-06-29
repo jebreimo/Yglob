@@ -47,6 +47,7 @@ TEST_CASE("Case-sensitive PathIterator with absolute paths")
     REQUIRE(it.next());
     REQUIRE(it.path() == file_paths[0]);
     REQUIRE_FALSE(it.next());
+    REQUIRE_FALSE(it.next());
 
     it = Yglob::PathIterator(files.get_path("a/*.txt"));
     REQUIRE(it.next());
@@ -206,5 +207,21 @@ TEST_CASE("PathIterator with local recursive path")
     REQUIRE(contains(file_paths, canonical(it.path())));
     REQUIRE(it.next());
     REQUIRE(contains(file_paths, canonical(it.path())));
+    REQUIRE_FALSE(it.next());
+}
+
+TEST_CASE("Case-sensitive PathIterator")
+{
+    TempFiles files("YglobTest", true);
+    files.make_files({"abc.TXT", "a/def.TXT", "b/ghi.txt"});
+
+    auto dir_paths = files.directories();
+    // Remove YglobTest itself.
+    dir_paths.erase(dir_paths.begin());
+
+    Yglob::PathIterator it(files.get_path("**/*.txt"),
+                           Yglob::PathIteratorFlags::CASE_SENSITIVE_GLOBS);
+    REQUIRE(it.next());
+    REQUIRE(it.path() == files.get_path("b/ghi.txt"));
     REQUIRE_FALSE(it.next());
 }

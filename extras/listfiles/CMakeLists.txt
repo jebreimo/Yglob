@@ -8,11 +8,19 @@
 cmake_minimum_required(VERSION 3.28)
 project(listfiles)
 
+include(FetchContent)
+FetchContent_Declare(argos
+    GIT_REPOSITORY "https://github.com/jebreimo/Argos.git"
+    GIT_TAG "v1.2.2"
+)
+FetchContent_MakeAvailable(argos)
+
 add_executable(listfiles
     ListFiles.cpp
     )
 
 target_link_libraries(listfiles
+    Argos::Argos
     Ystring2::Ystring
     Yglob::Yglob
     )

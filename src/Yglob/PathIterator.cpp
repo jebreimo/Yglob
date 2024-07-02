@@ -50,6 +50,15 @@ namespace Yglob
             return result;
         }
 
+        std::filesystem::directory_options
+        to_directory_options(PathIteratorFlags flags)
+        {
+            std::filesystem::directory_options result = {};
+            if (!bool(flags & PathIteratorFlags::THROW_IF_ACCESS_DENIED))
+                result |= std::filesystem::directory_options::skip_permission_denied;
+            return result;
+        }
+
         std::vector<std::unique_ptr<PathPartIterator>>
         parse_glob_path(const std::filesystem::path& path,
                         PathIteratorFlags flags)
@@ -64,9 +73,9 @@ namespace Yglob
                 if (name == u8"**")
                 {
                     handle_plain_path(result, plain_path);
-                    result.emplace_back(std::make_unique <DoubleStarIterator>(
-                        PathMatcher(make_path(++it, end, u8"**"),
-                                    to_glob_flags(flags))));
+                    result.emplace_back(std::make_unique<DoubleStarIterator>(
+                        PathMatcher(make_path(++it, end, u8"**")),
+                        to_directory_options(flags)));
                     if (result.size() == 1)
                         result.back()->set_base_path(".");
                     break;
@@ -83,7 +92,8 @@ namespace Yglob
                     handle_plain_path(result, plain_path);
                     result.emplace_back(std::make_unique<GlobIterator>(
                         GlobMatcher(ystring::to_string_view(name),
-                                    *glob_flags)));
+                                    *glob_flags),
+                        to_directory_options(flags)));
                     if (result.size() == 1)
                         result.back()->set_base_path(".");
                 }

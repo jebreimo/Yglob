@@ -9,6 +9,12 @@
 #include <iostream>
 #include <Argos/Argos.hpp>
 
+#ifdef _WIN32
+    auto& cout = std::wcout;
+#else
+    auto& cout = std::cout;
+#endif
+
 argos::ParsedArguments parse_arguments(int argc, char* argv[])
 {
     using namespace argos;
@@ -33,21 +39,30 @@ argos::ParsedArguments parse_arguments(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    auto args = parse_arguments(argc, argv);
+    try
+    {
+        auto args = parse_arguments(argc, argv);
 
-    auto flags = Yglob::PathIteratorFlags::DEFAULT;
-    if (args.value("-i").as_string() == "ignore")
-        flags |= Yglob::PathIteratorFlags::CASE_INSENSITIVE_PATHS;
-    else if (args.value("-i").as_string() == "enforce")
-        flags |= Yglob::PathIteratorFlags::CASE_SENSITIVE_GLOBS;
+        auto flags = Yglob::PathIteratorFlags::DEFAULT;
+        if (args.value("-i").as_string() == "ignore")
+            flags |= Yglob::PathIteratorFlags::CASE_INSENSITIVE_PATHS;
+        else if (args.value("-i").as_string() == "enforce")
+            flags |= Yglob::PathIteratorFlags::CASE_SENSITIVE_GLOBS;
 
-    if (args.value("--no-files").as_bool())
-        flags |= Yglob::PathIteratorFlags::NO_FILES;
-    if (args.value("--no-dirs").as_bool())
-        flags |= Yglob::PathIteratorFlags::NO_DIRECTORIES;
+        if (args.value("--no-files").as_bool())
+            flags |= Yglob::PathIteratorFlags::NO_FILES;
+        if (args.value("--no-dirs").as_bool())
+            flags |= Yglob::PathIteratorFlags::NO_DIRECTORIES;
 
-    for (auto& path : Yglob::PathIterator(args.value("path").as_string(), flags))
-        std::cout << path.lexically_normal().string() << '\n';
-
+        for (auto& path: Yglob::PathIterator(args.value("path").as_string(), flags))
+        {
+            cout << path.lexically_normal().native() << '\n';
+        }
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << ex.what() << '\n';
+        return 1;
+    }
     return 0;
 }

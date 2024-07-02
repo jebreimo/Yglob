@@ -49,7 +49,8 @@ namespace Yglob
     class GlobIterator : public PathPartIterator
     {
     public:
-        explicit GlobIterator(GlobMatcher matcher);
+        GlobIterator(GlobMatcher matcher,
+                     std::filesystem::directory_options options);
 
         bool next() override;
 
@@ -64,12 +65,14 @@ namespace Yglob
         std::filesystem::path base_path_;
         std::filesystem::path current_path_;
         GlobMatcher matcher_;
+        std::filesystem::directory_options options_;
     };
 
     class DoubleStarIterator : public PathPartIterator
     {
     public:
-        explicit DoubleStarIterator(PathMatcher matcher);
+        DoubleStarIterator(PathMatcher matcher,
+                           std::filesystem::directory_options options);
 
         void set_base_path(std::filesystem::path base_path) override;
 
@@ -84,5 +87,6 @@ namespace Yglob
         std::filesystem::path base_path_;
         std::filesystem::path current_path_;
         PathMatcher matcher_;
+        std::filesystem::directory_options options_;
     };
 }

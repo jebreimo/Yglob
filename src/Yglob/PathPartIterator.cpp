@@ -47,10 +47,11 @@ namespace Yglob
         return current_path_;
     }
 
-    GlobIterator::GlobIterator(GlobMatcher matcher)
-        : matcher_(std::move(matcher))
-    {
-    }
+    GlobIterator::GlobIterator(GlobMatcher matcher,
+                               std::filesystem::directory_options options)
+        : matcher_(std::move(matcher)),
+          options_(options)
+    {}
 
     bool GlobIterator::next()
     {
@@ -71,7 +72,7 @@ namespace Yglob
     void GlobIterator::set_base_path(std::filesystem::path base_path)
     {
         base_path_ = std::move(base_path);
-        it_ = std::filesystem::directory_iterator(base_path_);
+        it_ = std::filesystem::directory_iterator(base_path_, options_);
         end_ = end(it_);
     }
 
@@ -80,15 +81,16 @@ namespace Yglob
         return current_path_;
     }
 
-    DoubleStarIterator::DoubleStarIterator(PathMatcher matcher)
-        : matcher_(std::move(matcher))
-    {
-    }
+    DoubleStarIterator::DoubleStarIterator(PathMatcher matcher,
+                                           std::filesystem::directory_options options)
+        : matcher_(std::move(matcher)),
+          options_(options)
+    {}
 
     void DoubleStarIterator::set_base_path(std::filesystem::path base_path)
     {
         base_path_ = std::move(base_path);
-        it_ = std::filesystem::recursive_directory_iterator(base_path_);
+        it_ = std::filesystem::recursive_directory_iterator(base_path_, options_);
         end_ = end(it_);
     }
 

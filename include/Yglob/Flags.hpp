@@ -48,7 +48,8 @@ namespace Yglob
          */
         CASE_INSENSITIVE_PATHS = 8,
         NO_FILES = 16,
-        NO_DIRECTORIES = 32
+        NO_DIRECTORIES = 32,
+        THROW_IF_ACCESS_DENIED = 64
     };
 
     YGLOB_ENABLE_BITMASK_OPERATORS(PathIteratorFlags);

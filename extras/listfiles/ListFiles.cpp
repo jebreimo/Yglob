@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
         flags |= Yglob::PathIteratorFlags::NO_DIRECTORIES;
 
     for (auto& path : Yglob::PathIterator(args.value("path").as_string(), flags))
-        std::cout << path << '\n';
+        std::cout << path.lexically_normal().string() << '\n';
 
     return 0;
 }

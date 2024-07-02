@@ -13,7 +13,7 @@
   * @brief Defines the exception thrown by Yglob functions.
   */
 
-namespace YGlob
+namespace Yglob
 {
     /**
      * @brief The exception class used throughout Yglob.
@@ -26,7 +26,7 @@ namespace YGlob
 }
 
 #define YGLOB_IMPL_THROW_3(file, line, msg) \
-    throw ::YGlob::YglobException(file ":" #line ": " msg)
+    throw ::Yglob::YglobException(file ":" #line ": " msg)
 
 #define YGLOB_IMPL_THROW_2(file, line, msg) \
     YGLOB_IMPL_THROW_3(file, line, msg)

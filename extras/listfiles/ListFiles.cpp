@@ -6,25 +6,27 @@
 // License text is included with the source distribution.
 //****************************************************************************
 #include <Yglob/PathIterator.hpp>
+
 #include <iostream>
 #include <Argos/Argos.hpp>
 
-#ifdef _WIN32
-    auto& cout = std::wcout;
-#else
-    auto& cout = std::cout;
-#endif
+const char* to_char(const std::u8string& str)
+{
+    return reinterpret_cast<const char*>(str.data());
+}
 
 argos::ParsedArguments parse_arguments(int argc, char* argv[])
 {
     using namespace argos;
     return ArgumentParser()
         .add(Arg("path").help("The path to list files in."))
+        .add(Opt{"-a", "--absolute"}
+            .help("List files with absolute paths."))
         .add(Opt{"-i", "--ignore-case"}
             .constant("ignore")
             .help("Ignore case when comparing file names."))
         .add(Opt{"-c", "--case-sensitive"}
-            .alias("-i").constant("enforce")
+            .alias("--ignore-case").constant("enforce")
             .help("Enforce case when comparing file names."))
         .add(Opt{"-f", "--files"}.alias("--no-files").constant(false)
             .help("Include files in the listing. (default: true)"))
@@ -44,9 +46,9 @@ int main(int argc, char* argv[])
         auto args = parse_arguments(argc, argv);
 
         auto flags = Yglob::PathIteratorFlags::DEFAULT;
-        if (args.value("-i").as_string() == "ignore")
+        if (args.value("--ignore-case").as_string() == "ignore")
             flags |= Yglob::PathIteratorFlags::CASE_INSENSITIVE_PATHS;
-        else if (args.value("-i").as_string() == "enforce")
+        else if (args.value("--ignore-case").as_string() == "enforce")
             flags |= Yglob::PathIteratorFlags::CASE_SENSITIVE_GLOBS;
 
         if (args.value("--no-files").as_bool())
@@ -54,9 +56,14 @@ int main(int argc, char* argv[])
         if (args.value("--no-dirs").as_bool())
             flags |= Yglob::PathIteratorFlags::NO_DIRECTORIES;
 
+        auto use_absolute = args.value("--absolute").as_bool();
+
         for (auto& path: Yglob::PathIterator(args.value("path").as_string(), flags))
         {
-            cout << path.lexically_normal().native() << '\n';
+            if (use_absolute)
+                std::cout << to_char(absolute(path.lexically_normal()).u8string()) << '\n';
+            else
+                std::cout << to_char(path.lexically_normal().u8string()) << '\n';
         }
     }
     catch (std::exception& ex)

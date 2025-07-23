@@ -6,7 +6,7 @@
 # License text is included with the source distribution.
 # ===========================================================================
 cmake_minimum_required(VERSION 3.28)
-project(Yglob VERSION 0.1.0)
+project(Yglob VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -35,7 +35,7 @@ endif ()
 include(FetchContent)
 FetchContent_Declare(ystring
     GIT_REPOSITORY "https://github.com/jebreimo/Ystring2.git"
-    GIT_TAG "v2.2.0"
+    GIT_TAG "v2.3.1"
 )
 FetchContent_MakeAvailable(ystring)
 
